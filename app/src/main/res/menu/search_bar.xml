@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item android:id="@+id/action_search"
+        android:orderInCategory="100"
+        android:title="Search title"
+        android:icon="@drawable/ic_search_white"
+        android:iconifiedByDefault="false"
+        app:showAsAction="always"
+        app:actionViewClass="android.support.v7.widget.SearchView" />
+    <item android:id="@+id/action_export_to_csv"
+        android:orderInCategory="200"
+        android:title="Export to csv"
+        app:showAsAction="never" />
+    <item android:id="@+id/action_clear_export_list"
+        android:orderInCategory="300"
+        android:title="Clear export list"
+        app:showAsAction="never" />
+</menu>

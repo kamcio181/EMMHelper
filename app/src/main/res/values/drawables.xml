@@ -1,0 +1,13 @@
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+    <item name="ic_menu_camera" type="drawable">@android:drawable/ic_menu_camera</item>
+    <item name="ic_menu_gallery" type="drawable">@android:drawable/ic_menu_gallery</item>
+    <item name="ic_menu_slideshow" type="drawable">@android:drawable/ic_menu_slideshow</item>
+    <item name="ic_menu_manage" type="drawable">@android:drawable/ic_menu_manage</item>
+    <item name="ic_menu_share" type="drawable">@android:drawable/ic_menu_share</item>
+    <item name="ic_menu_send" type="drawable">@android:drawable/ic_menu_send</item>
+    <item name="ic_exp_grey_file" type="drawable">@mipmap/ic_file_document_grey600_36dp</item>
+    <item name="ic_exp_grey_folder" type="drawable">@mipmap/ic_folder_grey600_36dp</item>
+    <item name="ic_fab_save_white" type="drawable">@mipmap/ic_save_white_18dp</item>
+    <item name="ic_search_white" type="drawable">@mipmap/ic_search_white_24dp</item>
+    <item name="ic_expand_black" type="drawable">@mipmap/ic_keyboard_arrow_down_black_18dp</item>
+</resources>
