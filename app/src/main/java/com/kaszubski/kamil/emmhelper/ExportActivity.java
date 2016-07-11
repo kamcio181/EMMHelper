@@ -2,9 +2,12 @@ package com.kaszubski.kamil.emmhelper;
 
 import android.Manifest;
 import android.app.Dialog;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
@@ -24,6 +27,7 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.MimeTypeMap;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -38,6 +42,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 
 public class ExportActivity extends AppCompatActivity implements View.OnClickListener{
@@ -49,11 +54,12 @@ public class ExportActivity extends AppCompatActivity implements View.OnClickLis
     private Handler handler = new Handler();
     private Runnable exitRunnable;
     private String name;
-    private ArrayList<String> packages;
-    private static final String fileExtension = ".csv";
+    private boolean hideFab = false;
+    private ArrayList<String> arrayToSave = new ArrayList<>();
+    private static String fileExtension;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) { // TODO apk icon browser
         super.onCreate(savedInstanceState);
         context = this;
         setContentView(R.layout.activity_export);
@@ -61,7 +67,23 @@ public class ExportActivity extends AppCompatActivity implements View.OnClickLis
         setResetExitFlagRunnable();
 
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-        packages = getIntent().getStringArrayListExtra(Constants.PACKAGES_KEY);
+        Intent intent = getIntent();
+
+        fileExtension = intent.getStringExtra(Constants.FILE_FORMAT_KEY);
+
+        if(!intent.hasExtra(Constants.FILE_FORMAT_KEY)){ //file browser mode
+            //TODO file browser mode
+            hideFab = true;
+        } else if((fileExtension = intent.getStringExtra(Constants.FILE_FORMAT_KEY)).equals(Constants.APK_FILE_EXTENSION)){ //find apk file to view manifest
+            //TODO view manifest from APK
+            hideFab = true;
+        } else if(intent.hasExtra(Constants.STRING_KEY)){ //save string i.e. manifest
+            arrayToSave.addAll(Arrays.asList(intent.getStringExtra(Constants.STRING_KEY).split("\n")));
+        } else if (intent.hasExtra(Constants.ARRAY_KEY)){ //save string array list i.e. packageNames
+            arrayToSave = intent.getStringArrayListExtra(Constants.ARRAY_KEY);
+        } else
+            finish();
+
 
         setupToolbarAndFab();
 
@@ -93,7 +115,9 @@ public class ExportActivity extends AppCompatActivity implements View.OnClickLis
         }
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        if(fab!=null)
+        if(hideFab && fab != null)
+            fab.hide();
+        else if(fab!=null)
             fab.setOnClickListener(this);
     }
 
@@ -135,7 +159,7 @@ public class ExportActivity extends AppCompatActivity implements View.OnClickLis
         LayoutInflater inflater = getLayoutInflater();
         View layout = inflater.inflate(R.layout.dialog_edit_text, null);
         final EditText titleEditText = (EditText) layout.findViewById(R.id.titleEditText);
-        titleEditText.setText("packages");
+        titleEditText.setText("Untitled");
         titleEditText.setSelection(0, titleEditText.length());
 
         return builder.setTitle("Set file name").setView(layout)
@@ -236,6 +260,8 @@ public class ExportActivity extends AppCompatActivity implements View.OnClickLis
                 for (String i : items) {
                     if (new File(path+i).isDirectory())
                         dirs.add(i);
+                    else if(fileExtension == null)
+                        files.add(i);
                     else if (i.endsWith(fileExtension))
                         files.add(i.substring(0, i.lastIndexOf(".")));
                 }
@@ -263,10 +289,30 @@ public class ExportActivity extends AppCompatActivity implements View.OnClickLis
                                     path = path + item;
                                     new GetFiles().execute();
                                 } else
-                                    Utils.showToast(context, "You are not allowed to write in this folder");
+                                    Utils.showToast(context, "You are not allowed to view this folder");
                             } else {
-                                Utils.getConfirmationDialog(context, "Do you want to override this file?",
-                                        getFileOverrideAction(item+fileExtension)).show();
+                                if(fileExtension == null){ //file browser
+                                    File file = new File(path + item);
+                                    Log.e(TAG, item.substring(0, item.lastIndexOf(".")));
+                                    String mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(item.substring(item.lastIndexOf(".")+1));
+
+                                    Intent intent = new Intent();
+                                    intent.setAction(android.content.Intent.ACTION_VIEW);
+                                    intent.setDataAndType(Uri.fromFile(file), mime);
+                                    try {
+                                        startActivity(intent);
+                                    } catch (ActivityNotFoundException e){
+                                        Utils.showToast(context, "Unable to find application to open this type of file");
+                                    }
+                                }
+                                else if(hideFab){ // view manifest xml
+                                    Intent intent = new Intent(context, XmlViewerActivity.class);
+                                    intent.putExtra(Constants.SOURCE_DIR, path + item + fileExtension);
+                                    startActivity(intent);
+                                } else {
+                                    Utils.getConfirmationDialog(context, "Do you want to override this file?",
+                                            getFileOverrideAction(item + fileExtension)).show();
+                                }
                             }
                         }
                     }));
@@ -286,7 +332,7 @@ public class ExportActivity extends AppCompatActivity implements View.OnClickLis
             try {
                 f = new FileOutputStream(file);
                 PrintWriter p = new PrintWriter(f);
-                for(String line : packages)
+                for(String line : arrayToSave)
                     p.println(line);
                 p.flush();
                 p.close();
@@ -303,7 +349,7 @@ public class ExportActivity extends AppCompatActivity implements View.OnClickLis
             super.onPostExecute(aBoolean);
 
             if(aBoolean) {
-                Utils.showToast(context, "Saving to csv file");
+                Utils.showToast(context, "Saving to " + fileExtension.substring(1) + " file");
                 finish();
             }
             else

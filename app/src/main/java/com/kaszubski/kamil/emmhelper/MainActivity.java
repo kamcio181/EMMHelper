@@ -8,6 +8,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -23,10 +24,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ProgressBar;
 
 import com.kaszubski.kamil.emmhelper.utils.Constants;
 import com.kaszubski.kamil.emmhelper.utils.Utils;
@@ -46,14 +47,17 @@ public class MainActivity extends AppCompatActivity
     private FragmentManager fragmentManager;
     private SearchView searchView;
     private ProgressDialog progressDialog;
+    private ProgressBar progressBar;
     private FloatingActionButton fab;
     private SearchPackages searchPackages;
+    private Toolbar toolbar;
+    private String previousQuery;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         fragmentManager = getSupportFragmentManager();
 
@@ -92,9 +96,9 @@ public class MainActivity extends AppCompatActivity
         // Inflate the menu; this adds items to the action bar if it is present.
         if(fragmentManager.findFragmentById(R.id.container) != null) {
             switch (fragmentManager.findFragmentById(R.id.container).getTag()) {
-                case Constants.FRAGMENT_SEARCH:
+                case Constants.FRAGMENT_SEARCH: //TODO search and menu at the same time
                     getMenuInflater().inflate(R.menu.search_bar, menu);
-
+                    setTitle("App list");
                     SearchManager searchManager =
                             (SearchManager) getSystemService(Context.SEARCH_SERVICE);
                     searchView =
@@ -102,9 +106,6 @@ public class MainActivity extends AppCompatActivity
                     searchView.setSearchableInfo(
                             searchManager.getSearchableInfo(getComponentName()));
                     searchView.setQueryHint("Package name...");
-                    searchView.setIconified(false);
-                    searchView.requestFocus();
-                    searchView.setMaxWidth((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 260, getResources().getDisplayMetrics()));
 
                     progressDialog = new ProgressDialog(this, ProgressDialog.STYLE_SPINNER);
                     progressDialog.setMessage("Loading packages...");
@@ -134,7 +135,8 @@ public class MainActivity extends AppCompatActivity
                 ArrayList<String> export = ((SearchFragment)fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH)).getExportList();
                 if(export != null && export.size()>0){
                     Intent intent = new Intent(this, ExportActivity.class);
-                    intent.putExtra(Constants.PACKAGES_KEY, export);
+                    intent.putExtra(Constants.ARRAY_KEY, export);
+                    intent.putExtra(Constants.FILE_FORMAT_KEY, Constants.CSV_FILE_EXTENSION);
                     startActivity(intent);
                 } else {
                     Utils.showToast(this, "Export list is empty");
@@ -157,13 +159,18 @@ public class MainActivity extends AppCompatActivity
 
         switch (id){
             case R.id.nav_app_list:
-                fragmentManager.beginTransaction().replace(R.id.container, new SearchFragment(), Constants.FRAGMENT_SEARCH).setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN).commit();
+                fragmentManager.beginTransaction().
+                        replace(R.id.container, new SearchFragment(), Constants.FRAGMENT_SEARCH).
+                        setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN).commit();
                 fab.hide();
                 break;
             case R.id.nav_manifest_viewer:
+                Intent intent = new Intent(this, ExportActivity.class);
+                intent.putExtra(Constants.FILE_FORMAT_KEY, Constants.APK_FILE_EXTENSION);
+                startActivity(intent);
                 break;
             case R.id.nav_root_explorer:
-
+                startActivity(new Intent(this, ExportActivity.class));
                 break;
             case R.id.nav_ip_for_hostname:
 
@@ -183,17 +190,43 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public boolean onQueryTextChange(String newText) {
+    public boolean onQueryTextChange(final String newText) {
         Log.v(TAG, "query \"" + newText +"\"");
-        Fragment fragment;
+        Fragment fragment = fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH);
         if(newText.trim().length()>0) {
-            searchResults.clear();
-            if(searchPackages != null )
-                searchPackages.cancel(true);
-            searchPackages = new SearchPackages();
-            searchPackages.execute(newText);
+            if(progressBar == null && fragment!= null)
+                progressBar = ((SearchFragment)fragment).getProgressBar();
 
-        } else if((fragment = fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH)) != null)
+            if(previousQuery!= null && newText.contains(previousQuery)){
+                Log.i(TAG, "similar query true");
+                final Handler handler = new Handler();
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if(searchPackages.getStatus() == AsyncTask.Status.FINISHED){
+                            searchPackages = new SearchPackages(true);
+                            searchPackages.execute(newText);
+                        } else {
+                            handler.postDelayed(this, 200);
+                        }
+                    }
+                });
+
+            } else {
+                Log.i(TAG, "similar query false");
+                searchResults.clear();
+                if(searchPackages != null) {
+                    searchPackages.cancel(true);
+                    progressBar.setVisibility(View.INVISIBLE);
+                }
+
+                searchPackages = new SearchPackages();
+                searchPackages.execute(newText);
+            }
+            previousQuery = newText;
+            progressBar.setVisibility(View.VISIBLE);
+
+        } else if(fragment!= null)
             ((SearchFragment)fragment).setSearchResults(list);
         return true;
     }
@@ -247,22 +280,49 @@ public class MainActivity extends AppCompatActivity
     }
 
     class SearchPackages extends AsyncTask<String, Void, List<PackageInfo>>{
+        private boolean searchInCurrentResults;
+
+        public SearchPackages(boolean searchInCurrentResults){
+            this.searchInCurrentResults = searchInCurrentResults;
+        }
+
+        public SearchPackages(){
+            searchInCurrentResults = false;
+        }
 
         @Override
         protected List<PackageInfo> doInBackground(String... params) {
-            for (PackageInfo p : list) {
-                if (p.packageName.contains(params[0]) || String.valueOf(p.applicationInfo.loadLabel(packageManager)).contains(params[0])) {
-                    searchResults.add(p);
-                }
-            }
+            String textToFind = params[0].toLowerCase();
 
-            return searchResults;
+            ArrayList<PackageInfo> input;
+            ArrayList<PackageInfo> results = new ArrayList<>();
+
+            if(searchInCurrentResults){
+                input = (ArrayList<PackageInfo>) searchResults;
+
+            }
+            else {
+                input = (ArrayList<PackageInfo>) list;
+            }
+            Log.i(TAG, "similar query " + searchInCurrentResults + " " + input.size());
+            for (PackageInfo p : input) {
+                if (p.packageName.toLowerCase().contains(textToFind) ||
+                        String.valueOf(p.applicationInfo.loadLabel(packageManager)).toLowerCase().
+                                contains(textToFind)) {
+                    results.add(p);
+                }
+                if (isCancelled())
+                    break;
+            }
+            Log.i(TAG, "results size " + results.size());
+            return results;
         }
 
         @Override
         protected void onPostExecute(List<PackageInfo> packageInfos) {
             super.onPostExecute(packageInfos);
-
+            searchResults = packageInfos;
+            progressBar.setVisibility(View.INVISIBLE);
             Collections.sort(searchResults, new PackagesComparator());
             Fragment fragment;
             if((fragment = fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH)) != null)

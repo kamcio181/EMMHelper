@@ -8,6 +8,7 @@
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="manifest_viewer_activity">Manifest Viewer</string>
 
     <string-array name="package_menu">
         <item>View info</item>

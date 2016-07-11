@@ -27,8 +27,11 @@
         <activity
             android:name=".ExportActivity"
             android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
-        <activity android:name=".ManifestViewerActivity"></activity>
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".ManifestViewerActivity"
+            android:label="@string/manifest_viewer_activity" />
+        <activity android:name=".XmlViewerActivity"></activity>
     </application>
 
 </manifest>

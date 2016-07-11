@@ -21,6 +21,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.kaszubski.kamil.emmhelper.utils.Constants;
@@ -31,11 +32,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class SearchFragment extends Fragment {
+public class SearchFragment extends Fragment { //TODO progress bar on top. if e -> em search result table from "e" search
     private static final String TAG = "SearchFragment";
     private RecyclerView recyclerView;
     private Context context;
     private PackageInfo packageInfo;
+    private ProgressBar progressBar;
     public SearchFragment() {
         // Required empty public constructor
     }
@@ -56,6 +58,7 @@ public class SearchFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         recyclerView = (RecyclerView) view.findViewById(R.id.recycler_view);
+        progressBar = (ProgressBar) view.findViewById(R.id.progressBar);
         ((MainActivity)context).closeDrawer();
     }
 
@@ -139,6 +142,10 @@ public class SearchFragment extends Fragment {
 
     public ArrayList<String> getExportList(){
         return SearchRecyclerAdapter.getExport();
+    }
+
+    public ProgressBar getProgressBar() {
+        return progressBar;
     }
 }
 class SearchRecyclerAdapter extends RecyclerView.Adapter<SearchRecyclerAdapter.DoubleLineAvatarViewHolder> {

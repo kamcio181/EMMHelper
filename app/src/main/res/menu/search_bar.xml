@@ -5,8 +5,7 @@
         android:orderInCategory="100"
         android:title="Search title"
         android:icon="@drawable/ic_search_white"
-        android:iconifiedByDefault="false"
-        app:showAsAction="always"
+        app:showAsAction="collapseActionView|ifRoom"
         app:actionViewClass="android.support.v7.widget.SearchView" />
     <item android:id="@+id/action_export_to_csv"
         android:orderInCategory="200"

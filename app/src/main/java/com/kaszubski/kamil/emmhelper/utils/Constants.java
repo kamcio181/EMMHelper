@@ -31,8 +31,14 @@ public interface Constants {
     String MY_NOTES_ID_KEY = "myNotesId";
     String TRASH_ID_KEY = "trashId";
     String TITLE_KEY = "title";
-    String PACKAGES_KEY = "packages";
+    String ARRAY_KEY = "array";
+    String STRING_KEY = "string";
     String PACKAGE_INFO_KEY = "packageInfo";
+    String SOURCE_DIR = "sourceDir";
+    String FILE_FORMAT_KEY = "fileFormat";
+    String TXT_FILE_EXTENSION = ".txt";
+    String CSV_FILE_EXTENSION = ".csv";
+    String APK_FILE_EXTENSION = ".apk";
     String SEARCH_IN_TITLE = "titleSearch";
     String SEARCH_IN_CONTENT = "contentSearch";
     String IGNORE_TABS_IN_WIDGETS_KEY = "ignoreTabsInWidget";
