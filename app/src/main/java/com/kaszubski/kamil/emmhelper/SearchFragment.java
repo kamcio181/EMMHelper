@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class SearchFragment extends Fragment { //TODO progress bar on top. if e -> em search result table from "e" search
+public class SearchFragment extends Fragment {
     private static final String TAG = "SearchFragment";
     private RecyclerView recyclerView;
     private Context context;

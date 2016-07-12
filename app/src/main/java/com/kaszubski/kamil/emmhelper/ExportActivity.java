@@ -72,10 +72,8 @@ public class ExportActivity extends AppCompatActivity implements View.OnClickLis
         fileExtension = intent.getStringExtra(Constants.FILE_FORMAT_KEY);
 
         if(!intent.hasExtra(Constants.FILE_FORMAT_KEY)){ //file browser mode
-            //TODO file browser mode
             hideFab = true;
         } else if((fileExtension = intent.getStringExtra(Constants.FILE_FORMAT_KEY)).equals(Constants.APK_FILE_EXTENSION)){ //find apk file to view manifest
-            //TODO view manifest from APK
             hideFab = true;
         } else if(intent.hasExtra(Constants.STRING_KEY)){ //save string i.e. manifest
             arrayToSave.addAll(Arrays.asList(intent.getStringExtra(Constants.STRING_KEY).split("\n")));
@@ -83,7 +81,6 @@ public class ExportActivity extends AppCompatActivity implements View.OnClickLis
             arrayToSave = intent.getStringArrayListExtra(Constants.ARRAY_KEY);
         } else
             finish();
-
 
         setupToolbarAndFab();
 

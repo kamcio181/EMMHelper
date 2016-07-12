@@ -37,7 +37,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity
+public class MainActivity extends AppCompatActivity //TODO export and manifest viewer as fragments
         implements NavigationView.OnNavigationItemSelectedListener,
         SearchView.OnQueryTextListener{
     private static final String TAG = "MainActivity";
@@ -78,7 +78,12 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
         navigationView.setCheckedItem(R.id.nav_app_list);
+        fragmentManager.beginTransaction().
+                replace(R.id.container, new SearchFragment(), Constants.FRAGMENT_SEARCH).
+                setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN).commit();
+        fab.hide();
     }
 
     @Override
@@ -96,8 +101,8 @@ public class MainActivity extends AppCompatActivity
         // Inflate the menu; this adds items to the action bar if it is present.
         if(fragmentManager.findFragmentById(R.id.container) != null) {
             switch (fragmentManager.findFragmentById(R.id.container).getTag()) {
-                case Constants.FRAGMENT_SEARCH: //TODO search and menu at the same time
-                    getMenuInflater().inflate(R.menu.search_bar, menu);
+                case Constants.FRAGMENT_SEARCH:
+                    getMenuInflater().inflate(R.menu.fragment_search, menu);
                     setTitle("App list");
                     SearchManager searchManager =
                             (SearchManager) getSystemService(Context.SEARCH_SERVICE);
@@ -114,6 +119,9 @@ public class MainActivity extends AppCompatActivity
 
                     new LoadPackages().execute();
 
+                    break;
+                case Constants.FRAGMENT_IP_FINDER:
+                    getMenuInflater().inflate(R.menu.fragment_ip_finder, menu);
                     break;
 //            case 1:
 //                getMenuInflater().inflate(R.menu.main, menu);
@@ -132,7 +140,11 @@ public class MainActivity extends AppCompatActivity
 
         switch (id){
             case R.id.action_export_to_csv:
-                ArrayList<String> export = ((SearchFragment)fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH)).getExportList();
+                ArrayList<String> export;
+                if(fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH) != null)
+                    export = ((SearchFragment)fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH)).getExportList();
+                else
+                    export = ((IPFinderFragment)fragmentManager.findFragmentByTag(Constants.FRAGMENT_IP_FINDER)).getExportList();
                 if(export != null && export.size()>0){
                     Intent intent = new Intent(this, ExportActivity.class);
                     intent.putExtra(Constants.ARRAY_KEY, export);
@@ -165,6 +177,7 @@ public class MainActivity extends AppCompatActivity
                 fab.hide();
                 break;
             case R.id.nav_manifest_viewer:
+                Utils.showToast(this, "Find APK file to view it's manifest");
                 Intent intent = new Intent(this, ExportActivity.class);
                 intent.putExtra(Constants.FILE_FORMAT_KEY, Constants.APK_FILE_EXTENSION);
                 startActivity(intent);
@@ -173,7 +186,10 @@ public class MainActivity extends AppCompatActivity
                 startActivity(new Intent(this, ExportActivity.class));
                 break;
             case R.id.nav_ip_for_hostname:
-
+                fragmentManager.beginTransaction().
+                        replace(R.id.container, new IPFinderFragment(), Constants.FRAGMENT_IP_FINDER).
+                        setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN).commit();
+                fab.hide();
                 break;
         }
         return true;
@@ -215,7 +231,7 @@ public class MainActivity extends AppCompatActivity
             } else {
                 Log.i(TAG, "similar query false");
                 searchResults.clear();
-                if(searchPackages != null) {
+                if(searchPackages != null && searchPackages.getStatus() != AsyncTask.Status.FINISHED) {
                     searchPackages.cancel(true);
                     progressBar.setVisibility(View.INVISIBLE);
                 }
@@ -243,7 +259,7 @@ public class MainActivity extends AppCompatActivity
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         Log.e(TAG, "code "+requestCode);
         switch (requestCode) {
-            case Constants.WRITE_PERMISSION: {
+            case Constants.WRITE_PERMISSION:
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     Fragment fragment;
@@ -251,6 +267,16 @@ public class MainActivity extends AppCompatActivity
                         Utils.extractAPK(this, ((SearchFragment)fragment).getPackageInfo());
                 } else {
                     Utils.showToast(this, "Write permission is required extract APKs");
+                }
+                break;
+            case Constants.INTERNET_PERMISSION: {
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Fragment fragment = fragmentManager.findFragmentByTag(Constants.FRAGMENT_IP_FINDER);
+                    if(fragment != null)
+                        ((IPFinderFragment)fragment).searchIPs();
+                } else {
+                    Utils.showToast(this, "Internet permission is required to export notes");
                 }
                 break;
             }
