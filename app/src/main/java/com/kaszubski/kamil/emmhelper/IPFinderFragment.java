@@ -28,7 +28,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class IPFinderFragment extends Fragment implements View.OnClickListener{ //TODO export to csv
+public class IPFinderFragment extends Fragment implements View.OnClickListener{
     private static final String TAG = "IPFinderFragment";
     private ProgressBar progressBar;
     private EditText editText;

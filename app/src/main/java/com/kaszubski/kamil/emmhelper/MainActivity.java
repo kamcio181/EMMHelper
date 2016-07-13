@@ -23,21 +23,24 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.kaszubski.kamil.emmhelper.utils.Constants;
 import com.kaszubski.kamil.emmhelper.utils.Utils;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity //TODO export and manifest viewer as fragments
+public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
         SearchView.OnQueryTextListener{
     private static final String TAG = "MainActivity";
@@ -91,9 +94,14 @@ public class MainActivity extends AppCompatActivity //TODO export and manifest v
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
-        } else {
+        } else if(fragmentManager.findFragmentByTag(Constants.FRAGMENT_EXPORT) != null){
+            if(getTitle().equals("/"))
+                super.onBackPressed();
+            else{
+                ((ExportFragment)fragmentManager.findFragmentByTag(Constants.FRAGMENT_EXPORT)).moveUp();
+            }
+        } else
             super.onBackPressed();
-        }
     }
 
     @Override
@@ -122,6 +130,24 @@ public class MainActivity extends AppCompatActivity //TODO export and manifest v
                     break;
                 case Constants.FRAGMENT_IP_FINDER:
                     getMenuInflater().inflate(R.menu.fragment_ip_finder, menu);
+                    break;
+                case Constants.FRAGMENT_EXPORT:
+                    try {
+                        Field titleField = Toolbar.class.getDeclaredField("mTitleTextView");
+                        titleField.setAccessible(true);
+                        TextView barTitleView = (TextView) titleField.get(toolbar);
+                        barTitleView.setEllipsize(TextUtils.TruncateAt.START);
+                        barTitleView.setFocusable(true);
+                        barTitleView.setFocusableInTouchMode(true);
+                        barTitleView.requestFocus();
+                        barTitleView.setSingleLine(true);
+                        barTitleView.setSelected(true);
+
+                    } catch (NoSuchFieldException e){
+                        Log.e(TAG, "" + e);
+                    } catch (IllegalAccessException e) {
+                        Log.e(TAG, " " + e);
+                    }
                     break;
 //            case 1:
 //                getMenuInflater().inflate(R.menu.main, menu);
@@ -178,12 +204,19 @@ public class MainActivity extends AppCompatActivity //TODO export and manifest v
                 break;
             case R.id.nav_manifest_viewer:
                 Utils.showToast(this, "Find APK file to view it's manifest");
-                Intent intent = new Intent(this, ExportActivity.class);
-                intent.putExtra(Constants.FILE_FORMAT_KEY, Constants.APK_FILE_EXTENSION);
-                startActivity(intent);
+//                Intent intent = new Intent(this, ExportActivity.class);
+//                intent.putExtra(Constants.FILE_FORMAT_KEY, Constants.APK_FILE_EXTENSION);
+//                startActivity(intent);
+                fragmentManager.beginTransaction().
+                        replace(R.id.container, ExportFragment.newInstance(Constants.APK_FILE_EXTENSION), Constants.FRAGMENT_EXPORT).
+                        setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN).commit();
+                fab.hide();
                 break;
             case R.id.nav_root_explorer:
-                startActivity(new Intent(this, ExportActivity.class));
+                fragmentManager.beginTransaction().
+                        replace(R.id.container, new ExportFragment(), Constants.FRAGMENT_EXPORT).
+                        setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN).commit();
+                fab.hide();
                 break;
             case R.id.nav_ip_for_hostname:
                 fragmentManager.beginTransaction().
@@ -265,8 +298,11 @@ public class MainActivity extends AppCompatActivity //TODO export and manifest v
                     Fragment fragment;
                     if((fragment = fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH)) != null)
                         Utils.extractAPK(this, ((SearchFragment)fragment).getPackageInfo());
+                    else if ((fragment = fragmentManager.findFragmentByTag(Constants.FRAGMENT_EXPORT)) != null){
+                        ((ExportFragment)fragment).permissionGranted();
+                    }
                 } else {
-                    Utils.showToast(this, "Write permission is required extract APKs");
+                    Utils.showToast(this, "Write permission is required to perform this action");
                 }
                 break;
             case Constants.INTERNET_PERMISSION: {

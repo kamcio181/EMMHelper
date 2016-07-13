@@ -56,6 +56,7 @@ public interface Constants {
     String FRAGMENT_TRASH_NOTE = "TrashNoteFragment";
     String FRAGMENT_SEARCH = "SearchFragment";
     String FRAGMENT_IP_FINDER = "IPFinderFragment";
+    String FRAGMENT_EXPORT = "ExportFragment";
     String FRAGMENT_SETTINGS_LIST = "SettingsListFragment";
     String FRAGMENT_SETTINGS_WIDGET_CONFIG = "SettingsWidgetConfigFragment";
     String FRAGMENT_SETTINGS_RESTORE_LIST = "SettingsRestoreListFragment";

@@ -54,7 +54,7 @@ public class XmlViewerActivity extends AppCompatActivity {
         switch (id){
             case R.id.action_export_to_txt:
 
-                String manifest = textView.getText().toString();
+                String manifest = textView.getText().toString().trim();
 
                 if(manifest.length() > 0){
                     Intent intent = new Intent(this, ExportActivity.class);
