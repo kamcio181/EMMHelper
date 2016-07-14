@@ -4,10 +4,6 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
-    <string name="action_settings">Settings</string>
-
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="manifest_viewer_activity">Manifest Viewer</string>
     <string name="activities">Activities</string>
     <string name="receivers">Receivers</string>
@@ -30,8 +26,8 @@
     <string name="failed">Failed</string>
     <string name="host_name_is_empty">Host name is empty</string>
     <string name="error_occurred_check_host_name_and_internet_connection">Error occurred. Check host name and internet connection</string>
-    <string name="query_hint">Package name...</string>
-    <string name="loading_packages">Loading packages...</string>
+    <string name="query_hint">Package name…</string>
+    <string name="loading_packages">Loading packages…</string>
     <string name="export_list_is_empty">Export list is empty</string>
     <string name="find_apk_file_to_view_its_manifest">Find APK file to view it\'s manifest</string>
     <string name="internet_permission_is_required_to_perform_this_action">Internet permission is required to perform this action</string>
