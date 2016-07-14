@@ -62,22 +62,6 @@ public class SearchFragment extends Fragment {
         ((MainActivity)context).closeDrawer();
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(Uri uri) {
-
-    }
-
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-    }
-
     public void setSearchResults(List<PackageInfo> results){
         if(results != null) {
             if (recyclerView.getAdapter() == null) {
@@ -207,11 +191,11 @@ class SearchRecyclerAdapter extends RecyclerView.Adapter<SearchRecyclerAdapter.D
                     if(export.contains(packageName)){
                         export.remove(packageName);
                         itemView.setBackgroundColor(Color.WHITE);
-                        Utils.showToast(context, "Package name removed to export list");
+                        Utils.showToast(context, context.getString(R.string.package_name_removed_from_export_list));
                     } else {
                         export.add(packageName);
                         itemView.setBackgroundColor(Color.LTGRAY);
-                        Utils.showToast(context, "Package name added to export list");
+                        Utils.showToast(context, context.getString(R.string.package_name_added_to_export_list));
                     }
                 }
             });

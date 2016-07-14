@@ -127,7 +127,7 @@ public class ExportFragment extends Fragment {
         if(new File(path).canWrite())
             setFileName().show();
         else
-            Utils.showToast(context, "You are not allowed to write in this folder");
+            Utils.showToast(context, context.getString(R.string.you_are_not_allowed_to_write_in_this_folder));
     }
 
     private Dialog setFileName(){
@@ -135,14 +135,14 @@ public class ExportFragment extends Fragment {
         LayoutInflater inflater = getLayoutInflater(null);
         View layout = inflater.inflate(R.layout.dialog_edit_text, null);
         final EditText titleEditText = (EditText) layout.findViewById(R.id.titleEditText);
-        titleEditText.setText("Untitled");
+        titleEditText.setText(R.string.untitled);
         titleEditText.setSelection(0, titleEditText.length());
 
-        return builder.setTitle("Set file name").setView(layout)
-                .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
+        return builder.setTitle(context.getString(R.string.set_file_name)).setView(layout)
+                .setPositiveButton(context.getString(R.string.confirm), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog1, int which) {
-                        String name1 = titleEditText.getText().toString().length() == 0 ? "Untitled"
+                        String name1 = titleEditText.getText().toString().length() == 0 ? getString(R.string.untitled)
                                 : titleEditText.getText().toString();
                         int i = 0;
                         String suffix = "";
@@ -153,10 +153,10 @@ public class ExportFragment extends Fragment {
                         saveNote(name1 + suffix + fileExtension);
                     }
                 })
-                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                .setNegativeButton(context.getString(R.string.cancel), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog1, int which) {
-                        Utils.showToast(context, "Cancelled");
+                        Utils.showToast(context, context.getString(R.string.cancelled));
                     }
                 }).create();
     }
@@ -242,7 +242,7 @@ public class ExportFragment extends Fragment {
                                     path = path + item;
                                     new GetFiles().execute();
                                 } else
-                                    Utils.showToast(context, "You are not allowed to view this folder");
+                                    Utils.showToast(context, context.getString(R.string.you_are_not_allowed_to_view_this_folder));
                             } else {
                                 if(fileExtension == null){ //file browser
                                     File file = new File(path + item);
@@ -255,7 +255,7 @@ public class ExportFragment extends Fragment {
                                     try {
                                         startActivity(intent);
                                     } catch (ActivityNotFoundException e){
-                                        Utils.showToast(context, "Unable to find application to open this type of file");
+                                        Utils.showToast(context, context.getString(R.string.unable_to_find_application_to_open_this_type_of_file));
                                     }
                                 }
                                 else if(fileExtension.equals(Constants.APK_FILE_EXTENSION)){ // view manifest xml
@@ -263,7 +263,7 @@ public class ExportFragment extends Fragment {
                                     intent.putExtra(Constants.SOURCE_DIR, path + item + fileExtension);
                                     startActivity(intent);
                                 } else {
-                                    Utils.getConfirmationDialog(context, "Do you want to override this file?",
+                                    Utils.getConfirmationDialog(context, context.getString(R.string.do_you_want_to_override_this_file),
                                             getFileOverrideAction(item + fileExtension)).show();
                                 }
                             }
@@ -302,11 +302,11 @@ public class ExportFragment extends Fragment {
             super.onPostExecute(aBoolean);
 
             if(aBoolean) {
-                Utils.showToast(context, "Saving to " + fileExtension.substring(1) + " file");
+                Utils.showToast(context, context.getString(R.string.saving_to) + " " + fileExtension.substring(1) + " " + context.getString(R.string.file));
                 ((AppCompatActivity)context).finish();
             }
             else
-                Utils.showToast(context, "Failed");
+                Utils.showToast(context, context.getString(R.string.failed));
         }
     }
 }

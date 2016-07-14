@@ -1,8 +1,5 @@
 package com.kaszubski.kamil.emmhelper;
 
-import android.app.ProgressDialog;
-import android.app.SearchManager;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
@@ -12,12 +9,9 @@ import android.content.pm.ProviderInfo;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
 import android.os.Bundle;
-import android.support.v4.view.MenuItemCompat;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SearchView;
 import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -31,18 +25,16 @@ import android.widget.TextView;
 import com.kaszubski.kamil.emmhelper.utils.Constants;
 import com.kaszubski.kamil.emmhelper.utils.VerticalSpaceItemDecoration;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.jar.JarFile;
 
-public class ManifestViewerActivity extends AppCompatActivity { //TODO raw manifest
+public class ManifestViewerActivity extends AppCompatActivity {
     private static final String TAG = "ManifestViewerActivity";
     private PackageInfo packageInfo;
     private TextView appNameTV, packageNameTV, versionCodeTV, versionNameTV, launcherCapabilitiesTV;
     private ImageView iconIV;
     private RecyclerView recyclerView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,7 +49,7 @@ public class ManifestViewerActivity extends AppCompatActivity { //TODO raw manif
         try {
             packageInfo = getPackageManager().getPackageInfo(packageName, PackageManager.GET_ACTIVITIES
                     | PackageManager.GET_RECEIVERS |PackageManager.GET_PERMISSIONS
-            | PackageManager.GET_SERVICES | PackageManager.GET_PROVIDERS | PackageManager.GET_INTENT_FILTERS);
+            | PackageManager.GET_SERVICES | PackageManager.GET_PROVIDERS);
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
@@ -71,12 +63,15 @@ public class ManifestViewerActivity extends AppCompatActivity { //TODO raw manif
 
         appNameTV.setText(packageInfo.applicationInfo.loadLabel(getPackageManager()));
         packageNameTV.setText(packageInfo.packageName);
-        versionCodeTV.setText(Html.fromHtml("<b>Version code: </b>" + packageInfo.versionCode));
-        versionNameTV.setText(Html.fromHtml("<b>Version name: </b>" + packageInfo.versionName));
+        versionCodeTV.setText(Html.fromHtml("<b>" + getString(R.string.version_code) + ": </b>"
+                + packageInfo.versionCode));
+        versionNameTV.setText(Html.fromHtml("<b>" + getString(R.string.version_name) + ": </b>"
+                + packageInfo.versionName));
 
 
 
-        launcherCapabilitiesTV.setText(Html.fromHtml("<b>Launcher/Kiosk ready: </b>" + (isLauncherReady() ? "Yes" : "No")));
+        launcherCapabilitiesTV.setText(Html.fromHtml("<b>" + getString(R.string.launcher_kiosk_ready)
+                + ": </b>" + (isLauncherReady() ? getString(R.string.yes) : getString(R.string.no))));
         iconIV.setImageDrawable(packageInfo.applicationInfo.loadIcon(getPackageManager()));
 
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
@@ -159,7 +154,7 @@ class ExpansionItemsAdapter extends RecyclerView.Adapter<ExpansionItemsAdapter.V
         receivers = packageInfo.receivers;
         permissions = packageInfo.permissions;
         services = packageInfo.services;
-        providers = packageInfo.providers;//TODO other components
+        providers = packageInfo.providers;
         packageNameToReplace = packageName+".";
 
         componentsList = new ArrayList<>();
@@ -193,19 +188,19 @@ class ExpansionItemsAdapter extends RecyclerView.Adapter<ExpansionItemsAdapter.V
     public void onBindViewHolder(ViewHolder holder, int position) {
         switch (componentsList.get(position)) {
             case ACTIVITIES:
-                holder.titleTV.setText("Activities");
+                holder.titleTV.setText(R.string.activities);
                 break;
             case RECEIVERS:
-                holder.titleTV.setText("Receivers");
+                holder.titleTV.setText(R.string.receivers);
                 break;
             case PERMISSIONS:
-                holder.titleTV.setText("Permissions");
+                holder.titleTV.setText(R.string.permissions);
                 break;
             case SERVICES:
-                holder.titleTV.setText("Services");
+                holder.titleTV.setText(R.string.services);
                 break;
             case PROVIDERS:
-                holder.titleTV.setText("Providers");
+                holder.titleTV.setText(R.string.providers);
                 break;
         }
         if(expandedArray[position]) {

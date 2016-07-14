@@ -62,7 +62,7 @@ public class XmlViewerActivity extends AppCompatActivity {
                     intent.putExtra(Constants.FILE_FORMAT_KEY, Constants.TXT_FILE_EXTENSION);
                     startActivity(intent);
                 } else {
-                    Utils.showToast(this, "Manifest is empty");
+                    Utils.showToast(this, getString(R.string.manifest_is_empty));
                 }
                 break;
         }
@@ -93,7 +93,7 @@ public class XmlViewerActivity extends AppCompatActivity {
                 xml = decompressXML(buf);
                 System.out.println(xml);
             } else {
-                xml = "Reading failed";
+                xml = getString(R.string.reading_failed);
             }
 
             textView.setText(xml);

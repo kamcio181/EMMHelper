@@ -14,6 +14,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import com.kaszubski.kamil.emmhelper.R;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -37,19 +39,19 @@ public class Utils {
         android.content.ClipboardManager clipboard = (android.content.ClipboardManager)
                 context.getSystemService(Context.CLIPBOARD_SERVICE);
         android.content.ClipData clip = android.content.ClipData.newPlainText
-                ("Copied Text", text);
+                (context.getString(R.string.copied_text), text);
         clipboard.setPrimaryClip(clip);
 
-        showToast(context, "Package name copied");
+        showToast(context, context.getString(R.string.package_name_copied));
     }
 
     public static Dialog getConfirmationDialog(final Context context, String title, DialogInterface.OnClickListener action){
         return new AlertDialog.Builder(context).setMessage(title)
-                .setPositiveButton("Confirm", action)
-                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                .setPositiveButton(context.getString(R.string.confirm), action)
+                .setNegativeButton(context.getString(R.string.cancel), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        Utils.showToast(context, "Cancelled");
+                        Utils.showToast(context, context.getString(R.string.cancelled));
                     }
                 }).create();
     }
@@ -66,11 +68,11 @@ public class Utils {
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.setType("text/plain");
         intent.putExtra(Intent.EXTRA_TEXT, packageName);
-        context.startActivity(Intent.createChooser(intent, "Share via"));
+        context.startActivity(Intent.createChooser(intent, context.getString(R.string.share_via)));
     }
 
     public static void extractAPK(Context context, PackageInfo packageInfo){
-        showToast(context, "Extracting in background");
+        showToast(context, context.getString(R.string.extracting_in_background));
         new ExtractAPK(context, packageInfo).execute();
     }
 
@@ -128,9 +130,9 @@ public class Utils {
             super.onPostExecute(aBoolean);
 
             if(aBoolean)
-                showToast(context, "APK extracted to:\n"+outputFile);
+                showToast(context, context.getString(R.string.apk_extracted_to)+outputFile);
             else
-                showToast(context, "Extraction failed");
+                showToast(context, context.getString(R.string.extraction_failed));
         }
     }
 }

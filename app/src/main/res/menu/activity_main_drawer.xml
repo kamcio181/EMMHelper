@@ -4,16 +4,16 @@
     <group android:checkableBehavior="single">
         <item
             android:id="@+id/nav_app_list"
-            android:title="App list" />
+            android:title="@string/application_list" />
         <item
             android:id="@+id/nav_manifest_viewer"
-            android:title="View manifest" />
+            android:title="@string/view_manifest" />
         <item
             android:id="@+id/nav_root_explorer"
-            android:title="File explorer" />
+            android:title="@string/file_explorer" />
         <item
             android:id="@+id/nav_ip_for_hostname"
-            android:title="Hostname IPs" />
+            android:title="@string/hostname_ips" />
     </group>
 
 

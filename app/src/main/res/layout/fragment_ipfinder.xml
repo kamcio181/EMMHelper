@@ -23,12 +23,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/editText"
-            android:hint="put host name here" />
+            android:hint="@string/put_host_name_here" />
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="List IP addresses"
+            android:text="@string/list_ip_addresses"
             android:id="@+id/button"
             android:layout_gravity="center_horizontal" />
 
@@ -36,7 +36,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="IP addresses:"
+            android:text="@string/ip_addresses"
             android:id="@+id/textView11"
             android:paddingTop="10dp"
             android:textColor="@color/colorPrimary"

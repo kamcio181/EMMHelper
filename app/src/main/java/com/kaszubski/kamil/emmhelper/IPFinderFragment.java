@@ -98,7 +98,7 @@ public class IPFinderFragment extends Fragment implements View.OnClickListener{
             }
             listAsync = new ListSync().execute(editText.getText().toString().trim());
         } else {
-            Utils.showToast(context, "Host name is empty");
+            Utils.showToast(context, context.getString(R.string.host_name_is_empty));
         }
     }
 
@@ -121,7 +121,7 @@ public class IPFinderFragment extends Fragment implements View.OnClickListener{
             } else {
                 textView.setText("");
                 textView2.setVisibility(View.INVISIBLE);
-                Utils.showToast(getContext(), "Error occurred.Check host name and internet connection");
+                Utils.showToast(getContext(), context.getString(R.string.error_occurred_check_host_name_and_internet_connection));
             }
         }
 

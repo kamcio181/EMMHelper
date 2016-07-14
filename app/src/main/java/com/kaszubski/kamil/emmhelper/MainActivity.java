@@ -10,9 +10,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -51,10 +49,11 @@ public class MainActivity extends AppCompatActivity
     private SearchView searchView;
     private ProgressDialog progressDialog;
     private ProgressBar progressBar;
-    private FloatingActionButton fab;
     private SearchPackages searchPackages;
     private Toolbar toolbar;
     private String previousQuery;
+    private DrawerLayout drawer;
+    private NavigationView navigationView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,35 +63,37 @@ public class MainActivity extends AppCompatActivity
         setSupportActionBar(toolbar);
         fragmentManager = getSupportFragmentManager();
 
-        fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        if(drawer != null)
+            setDrawer();
+
+        setNavigationView();
+
+        fragmentManager.beginTransaction().
+                replace(R.id.container, new SearchFragment(), Constants.FRAGMENT_SEARCH).
+                setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN).commit();
+    }
+
+    private void setDrawer(){
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
+    }
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
-
-        navigationView.setCheckedItem(R.id.nav_app_list);
-        fragmentManager.beginTransaction().
-                replace(R.id.container, new SearchFragment(), Constants.FRAGMENT_SEARCH).
-                setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN).commit();
-        fab.hide();
+    private void setNavigationView(){
+        navigationView = (NavigationView) findViewById(R.id.nav_view);
+        if (navigationView != null) {
+            navigationView.setNavigationItemSelectedListener(this);
+            navigationView.setCheckedItem(R.id.nav_app_list);
+        }
     }
 
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
+        if (drawer != null && drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else if(fragmentManager.findFragmentByTag(Constants.FRAGMENT_EXPORT) != null){
             if(getTitle().equals("/"))
@@ -111,17 +112,17 @@ public class MainActivity extends AppCompatActivity
             switch (fragmentManager.findFragmentById(R.id.container).getTag()) {
                 case Constants.FRAGMENT_SEARCH:
                     getMenuInflater().inflate(R.menu.fragment_search, menu);
-                    setTitle("App list");
+                    setTitle(getString(R.string.application_list));
                     SearchManager searchManager =
                             (SearchManager) getSystemService(Context.SEARCH_SERVICE);
                     searchView =
                             (SearchView) MenuItemCompat.getActionView(menu.findItem(R.id.action_search));
                     searchView.setSearchableInfo(
                             searchManager.getSearchableInfo(getComponentName()));
-                    searchView.setQueryHint("Package name...");
+                    searchView.setQueryHint(getString(R.string.query_hint));
 
                     progressDialog = new ProgressDialog(this, ProgressDialog.STYLE_SPINNER);
-                    progressDialog.setMessage("Loading packages...");
+                    progressDialog.setMessage(getString(R.string.loading_packages));
                     progressDialog.setIndeterminate(true);
                     progressDialog.show();
 
@@ -130,6 +131,7 @@ public class MainActivity extends AppCompatActivity
                     break;
                 case Constants.FRAGMENT_IP_FINDER:
                     getMenuInflater().inflate(R.menu.fragment_ip_finder, menu);
+                    setTitle(getString(R.string.hostname_ips));
                     break;
                 case Constants.FRAGMENT_EXPORT:
                     try {
@@ -149,9 +151,6 @@ public class MainActivity extends AppCompatActivity
                         Log.e(TAG, " " + e);
                     }
                     break;
-//            case 1:
-//                getMenuInflater().inflate(R.menu.main, menu);
-//                break;
             }
         }
         return true;
@@ -177,7 +176,7 @@ public class MainActivity extends AppCompatActivity
                     intent.putExtra(Constants.FILE_FORMAT_KEY, Constants.CSV_FILE_EXTENSION);
                     startActivity(intent);
                 } else {
-                    Utils.showToast(this, "Export list is empty");
+                    Utils.showToast(this, getString(R.string.export_list_is_empty));
                 }
                 break;
             case R.id.action_clear_export_list:
@@ -193,36 +192,27 @@ public class MainActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
-
-
-        switch (id){
+        switch (id) {
             case R.id.nav_app_list:
                 fragmentManager.beginTransaction().
                         replace(R.id.container, new SearchFragment(), Constants.FRAGMENT_SEARCH).
                         setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN).commit();
-                fab.hide();
                 break;
             case R.id.nav_manifest_viewer:
-                Utils.showToast(this, "Find APK file to view it's manifest");
-//                Intent intent = new Intent(this, ExportActivity.class);
-//                intent.putExtra(Constants.FILE_FORMAT_KEY, Constants.APK_FILE_EXTENSION);
-//                startActivity(intent);
+                Utils.showToast(this, getString(R.string.find_apk_file_to_view_its_manifest));
                 fragmentManager.beginTransaction().
                         replace(R.id.container, ExportFragment.newInstance(Constants.APK_FILE_EXTENSION), Constants.FRAGMENT_EXPORT).
                         setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN).commit();
-                fab.hide();
                 break;
             case R.id.nav_root_explorer:
                 fragmentManager.beginTransaction().
                         replace(R.id.container, new ExportFragment(), Constants.FRAGMENT_EXPORT).
                         setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN).commit();
-                fab.hide();
                 break;
             case R.id.nav_ip_for_hostname:
                 fragmentManager.beginTransaction().
                         replace(R.id.container, new IPFinderFragment(), Constants.FRAGMENT_IP_FINDER).
                         setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN).commit();
-                fab.hide();
                 break;
         }
         return true;
@@ -230,7 +220,9 @@ public class MainActivity extends AppCompatActivity
 
     public void closeDrawer(){
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
+        if (drawer != null) {
+            drawer.closeDrawer(GravityCompat.START);
+        }
     }
 
     @Override
@@ -302,7 +294,7 @@ public class MainActivity extends AppCompatActivity
                         ((ExportFragment)fragment).permissionGranted();
                     }
                 } else {
-                    Utils.showToast(this, "Write permission is required to perform this action");
+                    Utils.showToast(this, getString(R.string.write_permission_is_required_to_perform_this_action));
                 }
                 break;
             case Constants.INTERNET_PERMISSION: {
@@ -312,7 +304,7 @@ public class MainActivity extends AppCompatActivity
                     if(fragment != null)
                         ((IPFinderFragment)fragment).searchIPs();
                 } else {
-                    Utils.showToast(this, "Internet permission is required to export notes");
+                    Utils.showToast(this, getString(R.string.internet_permission_is_required_to_perform_this_action));
                 }
                 break;
             }

@@ -38,7 +38,7 @@ public class ExportActivity extends AppCompatActivity implements View.OnClickLis
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         context = this;
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_export);
 
         setResetExitFlagRunnable();
 
@@ -97,7 +97,7 @@ public class ExportActivity extends AppCompatActivity implements View.OnClickLis
             if(!exit){
                 exit = true;
                 handler.postDelayed(exitRunnable, 5000);
-                Utils.showToast(this, "Press back button again to exit");
+                Utils.showToast(this, getString(R.string.press_back_button_again_to_exit));
             } else {
                 finish();
             }
@@ -126,7 +126,7 @@ public class ExportActivity extends AppCompatActivity implements View.OnClickLis
                         ((ExportFragment) fragment).permissionGranted();
                     }
                 } else {
-                    Utils.showToast(context, "Write permission is required to perform this action");
+                    Utils.showToast(context, getString(R.string.write_permission_is_required_to_perform_this_action));
                     finish();
                 }
                 break;
