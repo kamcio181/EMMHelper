@@ -47,6 +47,8 @@
     <string name="manifest_is_empty">Manifest is empty</string>
     <string name="reading_failed">Reading failed</string>
     <string name="search_title">Search title</string>
+    <string name="share_list">Share list</string>
+    <string name="export_list_to_csv">Export to csv</string>
     <string name="export_to_csv">Export to csv</string>
     <string name="clear_export_list">Clear export list</string>
     <string name="application_list">Application list</string>
@@ -58,7 +60,11 @@
     <string name="put_host_name_here">put host name here</string>
     <string name="list_ip_addresses">List IP addresses</string>
     <string name="ip_addresses">IP addresses:</string>
-
+    <string name="decoding_manifest_file">Decoding manifest file</string>
+    <string name="share_manifest">Share manifest</string>
+    <string name="manifest_file_is_empty">Manifest file is empty</string>
+    <string name="share_ips">Share IPs</string>
+    <string name="xml_manifest_viewer">XML Manifest Viewer</string>
     <string-array name="package_menu">
         <item>View info</item>
         <item>View manifest</item>

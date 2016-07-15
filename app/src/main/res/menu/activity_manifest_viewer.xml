@@ -5,5 +5,5 @@
         android:id="@+id/action_view_as_xml"
         android:orderInCategory="100"
         android:title="@string/view_as_xml"
-        app:showAsAction="always" />
+        app:showAsAction="ifRoom" />
 </menu>

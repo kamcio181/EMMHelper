@@ -1,6 +1,8 @@
 package com.kaszubski.kamil.emmhelper;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -25,6 +27,8 @@ public class XmlViewerActivity extends AppCompatActivity {
     private TextView textView;
     private static HashMap<Integer, String> configMap;
     private static int mapSize;
+    private ProgressDialog progressDialog;
+    private String xml;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,7 +36,57 @@ public class XmlViewerActivity extends AppCompatActivity {
         setContentView(R.layout.activity_xml_viewer);
         textView = (TextView) findViewById(R.id.textView9);
 
+        progressDialog = new ProgressDialog(this, ProgressDialog.STYLE_SPINNER);
+        progressDialog.setMessage(getString(R.string.decoding_manifest_file));
+        progressDialog.setIndeterminate(true);
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+
         decodeXmlFile();
+    }
+
+    class DecodeXML extends AsyncTask<Void, Void, String>{
+        @Override
+        protected String doInBackground(Void... params) {
+            try{
+                String fileName = getIntent().getStringExtra(Constants.SOURCE_DIR);
+                InputStream is = null;
+                ZipFile zip = null;
+                if (fileName.endsWith(".apk") || fileName.endsWith(".zip")) {
+                    zip = new ZipFile(fileName);
+                    ZipEntry mft = zip.getEntry("AndroidManifest.xml");
+                    is = zip.getInputStream(mft);
+                } else {
+                    is = new FileInputStream(fileName);
+                }
+                byte[] buf = new byte[500000];
+                int bytesRead = is.read(buf);
+                is.close();
+                if (zip != null) {
+                    zip.close();
+                }
+                String xml;
+                if(bytesRead >0){
+                    xml = decompressXML(buf);
+                    System.out.println(xml);
+                } else {
+                    xml = getString(R.string.reading_failed);
+                }
+                return xml.trim();
+            }catch(Exception e){
+                System.out.println(e.toString());
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            if(s != null)
+                textView.setText(s);
+            xml = s;
+            progressDialog.dismiss();
+        }
     }
 
     @Override
@@ -65,41 +119,19 @@ public class XmlViewerActivity extends AppCompatActivity {
                     Utils.showToast(this, getString(R.string.manifest_is_empty));
                 }
                 break;
+            case R.id.action_share:
+                if(xml != null)
+                    Utils.shareViaList(this, xml);
+                 else
+                    Utils.showToast(this, getString(R.string.manifest_file_is_empty));
+                break;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
     public void decodeXmlFile(){
-        try{
-            String fileName = getIntent().getStringExtra(Constants.SOURCE_DIR);
-            InputStream is = null;
-            ZipFile zip = null;
-            if (fileName.endsWith(".apk") || fileName.endsWith(".zip")) {
-                zip = new ZipFile(fileName);
-                ZipEntry mft = zip.getEntry("AndroidManifest.xml");
-                is = zip.getInputStream(mft);
-            } else {
-                is = new FileInputStream(fileName);
-            }
-            byte[] buf = new byte[500000];
-            int bytesRead = is.read(buf);
-            is.close();
-            if (zip != null) {
-                zip.close();
-            }
-            String xml;
-            if(bytesRead >0){
-                xml = decompressXML(buf);
-                System.out.println(xml);
-            } else {
-                xml = getString(R.string.reading_failed);
-            }
-
-            textView.setText(xml);
-            }catch(Exception e){
-                System.out.println(e.toString());
-            }
+        new DecodeXML().execute();
     }
 
     public static int endDocTag = 0x00100101;

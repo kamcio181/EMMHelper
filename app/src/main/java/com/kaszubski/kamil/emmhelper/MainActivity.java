@@ -9,6 +9,7 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.TransactionTooLargeException;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
@@ -32,6 +33,9 @@ import android.widget.TextView;
 import com.kaszubski.kamil.emmhelper.utils.Constants;
 import com.kaszubski.kamil.emmhelper.utils.Utils;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -78,7 +82,7 @@ public class MainActivity extends AppCompatActivity
     private void setDrawer(){
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.setDrawerListener(toggle);
+        drawer.addDrawerListener(toggle);
         toggle.syncState();
     }
 
@@ -111,8 +115,9 @@ public class MainActivity extends AppCompatActivity
         if(fragmentManager.findFragmentById(R.id.container) != null) {
             switch (fragmentManager.findFragmentById(R.id.container).getTag()) {
                 case Constants.FRAGMENT_SEARCH:
-                    getMenuInflater().inflate(R.menu.fragment_search, menu);
+                    longTextTitleMode(false);
                     setTitle(getString(R.string.application_list));
+                    getMenuInflater().inflate(R.menu.fragment_search, menu);
                     SearchManager searchManager =
                             (SearchManager) getSystemService(Context.SEARCH_SERVICE);
                     searchView =
@@ -124,36 +129,42 @@ public class MainActivity extends AppCompatActivity
                     progressDialog = new ProgressDialog(this, ProgressDialog.STYLE_SPINNER);
                     progressDialog.setMessage(getString(R.string.loading_packages));
                     progressDialog.setIndeterminate(true);
+                    progressDialog.setCancelable(false);
                     progressDialog.show();
 
                     new LoadPackages().execute();
 
                     break;
                 case Constants.FRAGMENT_IP_FINDER:
-                    getMenuInflater().inflate(R.menu.fragment_ip_finder, menu);
+                    longTextTitleMode(false);
                     setTitle(getString(R.string.hostname_ips));
+                    getMenuInflater().inflate(R.menu.fragment_ip_finder, menu);
                     break;
                 case Constants.FRAGMENT_EXPORT:
-                    try {
-                        Field titleField = Toolbar.class.getDeclaredField("mTitleTextView");
-                        titleField.setAccessible(true);
-                        TextView barTitleView = (TextView) titleField.get(toolbar);
-                        barTitleView.setEllipsize(TextUtils.TruncateAt.START);
-                        barTitleView.setFocusable(true);
-                        barTitleView.setFocusableInTouchMode(true);
-                        barTitleView.requestFocus();
-                        barTitleView.setSingleLine(true);
-                        barTitleView.setSelected(true);
-
-                    } catch (NoSuchFieldException e){
-                        Log.e(TAG, "" + e);
-                    } catch (IllegalAccessException e) {
-                        Log.e(TAG, " " + e);
-                    }
+                    longTextTitleMode(true);
                     break;
             }
         }
         return true;
+    }
+
+    private void longTextTitleMode(boolean enabled){
+        try {
+            Field titleField = Toolbar.class.getDeclaredField("mTitleTextView");
+            titleField.setAccessible(enabled);
+            TextView barTitleView = (TextView) titleField.get(toolbar);
+            barTitleView.setEllipsize(enabled? TextUtils.TruncateAt.START: TextUtils.TruncateAt.START);
+            barTitleView.setFocusable(enabled);
+            barTitleView.setFocusableInTouchMode(enabled);
+            barTitleView.requestFocus();
+            barTitleView.setSingleLine(enabled);
+            barTitleView.setSelected(enabled);
+
+        } catch (NoSuchFieldException e){
+            Log.e(TAG, "" + e);
+        } catch (IllegalAccessException e) {
+            Log.e(TAG, " " + e);
+        }
     }
 
     @Override
@@ -164,6 +175,19 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         switch (id){
+            case R.id.action_share_list:
+                if(fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH) != null) {
+                    ArrayList<String> export = ((SearchFragment) fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH)).getExportList();
+                    if(export != null && export.size()>0){
+                        StringBuilder builder = new StringBuilder();
+                        for(String s : export)
+                            builder.append(s).append("\n");
+                        Utils.shareViaList(this, builder.toString().trim());
+                    } else {
+                        Utils.showToast(this, getString(R.string.export_list_is_empty));
+                    }
+                }
+                break;
             case R.id.action_export_to_csv:
                 ArrayList<String> export;
                 if(fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH) != null)
@@ -181,6 +205,19 @@ public class MainActivity extends AppCompatActivity
                 break;
             case R.id.action_clear_export_list:
                 ((SearchFragment)fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH)).clearExportList();
+                break;
+            case R.id.action_share:
+                if(fragmentManager.findFragmentByTag(Constants.FRAGMENT_IP_FINDER) != null){
+                    ArrayList<String> list = ((IPFinderFragment)fragmentManager.findFragmentByTag(Constants.FRAGMENT_IP_FINDER)).getExportList();
+                    if(list != null && list.size()>0){
+                        StringBuilder builder = new StringBuilder();
+                        for(String s : list)
+                            builder.append(s).append("\n");
+                        Utils.shareViaList(this, builder.toString().trim());
+                    } else {
+                        Utils.showToast(this, "IP list is empty");
+                    }
+                }
                 break;
         }
 
@@ -316,7 +353,36 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected List<PackageInfo> doInBackground(Void... params) {
             packageManager = getPackageManager();
-            list = packageManager.getInstalledPackages(PackageManager.GET_ACTIVITIES);
+                list = packageManager.getInstalledPackages(0);
+                if(list.size() < 50){
+                    list = new ArrayList<>();
+                    Process process;
+                    BufferedReader bufferedReader = null;
+                    try
+                    {
+                        process = Runtime.getRuntime().exec("pm list packages");
+                        bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                        String line;
+                        while((line=bufferedReader.readLine()) != null)
+                        {
+                            final String packageName = line.substring(line.indexOf(':')+1);
+                            final PackageInfo packageInfo = packageManager.getPackageInfo(packageName, 0);
+                            list.add(packageInfo);
+                        }
+                        process.waitFor();
+                    }
+                    catch(Exception f)
+                    {
+                        f.printStackTrace();
+                    }
+                    if(bufferedReader != null)
+                        try {
+                            bufferedReader.close();
+                        } catch (IOException e1) {
+                            e1.printStackTrace();
+                        }
+                }
+
             searchResults = new ArrayList<>();
 
             return list;

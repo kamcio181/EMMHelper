@@ -64,10 +64,10 @@ public class Utils {
         context.startActivity(intent);
     }
 
-    public static void sharePackageName(Context context, String packageName){
+    public static void shareViaList(Context context, String stringToShare){
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.setType("text/plain");
-        intent.putExtra(Intent.EXTRA_TEXT, packageName);
+        intent.putExtra(Intent.EXTRA_TEXT, stringToShare);
         context.startActivity(Intent.createChooser(intent, context.getString(R.string.share_via)));
     }
 
