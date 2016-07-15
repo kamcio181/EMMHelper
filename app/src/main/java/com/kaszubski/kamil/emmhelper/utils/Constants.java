@@ -4,6 +4,7 @@ public interface Constants {
     String ARRAY_KEY = "array";
     String STRING_KEY = "string";
     String PACKAGE_INFO_KEY = "packageInfo";
+    String APK_PATH = "apkPath";
     String SOURCE_DIR = "sourceDir";
     String FILE_FORMAT_KEY = "fileFormat";
     String TXT_FILE_EXTENSION = ".txt";

@@ -259,9 +259,13 @@ public class ExportFragment extends Fragment {
                                     }
                                 }
                                 else if(fileExtension.equals(Constants.APK_FILE_EXTENSION)){ // view manifest xml
-                                    Intent intent = new Intent(context, XmlViewerActivity.class);
-                                    intent.putExtra(Constants.SOURCE_DIR, path + item + fileExtension);
+                                    Intent intent = new Intent(context, ManifestViewerActivity.class);
+                                    intent.putExtra(Constants.APK_PATH,path + item + fileExtension);
                                     startActivity(intent);
+
+//                                    Intent intent = new Intent(context, XmlViewerActivity.class);
+//                                    intent.putExtra(Constants.SOURCE_DIR, );
+//                                    startActivity(intent);
                                 } else {
                                     Utils.getConfirmationDialog(context, context.getString(R.string.do_you_want_to_override_this_file),
                                             getFileOverrideAction(item + fileExtension)).show();

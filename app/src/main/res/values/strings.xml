@@ -65,6 +65,7 @@
     <string name="manifest_file_is_empty">Manifest file is empty</string>
     <string name="share_ips">Share IPs</string>
     <string name="xml_manifest_viewer">XML Manifest Viewer</string>
+    <string name="loading">Loading...</string>
     <string-array name="package_menu">
         <item>View info</item>
         <item>View manifest</item>

@@ -23,6 +23,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.kaszubski.kamil.emmhelper.utils.Constants;
+import com.kaszubski.kamil.emmhelper.utils.Utils;
 import com.kaszubski.kamil.emmhelper.utils.VerticalSpaceItemDecoration;
 
 import java.util.ArrayList;
@@ -34,34 +35,54 @@ public class ManifestViewerActivity extends AppCompatActivity {
     private TextView appNameTV, packageNameTV, versionCodeTV, versionNameTV, launcherCapabilitiesTV;
     private ImageView iconIV;
     private RecyclerView recyclerView;
+    private String sourceFile;
+    private boolean isPackageInstalled;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_manifest_viewer);
-        String packageName = "";
+        launcherCapabilitiesTV = (TextView) findViewById(R.id.textView8);
+        appNameTV = (TextView) findViewById(R.id.textView2);
+        iconIV = (ImageView) findViewById(R.id.imageView2);
+
+        String packageName;
         if(getIntent()!= null && getIntent().hasExtra(Constants.PACKAGE_INFO_KEY)){
             packageName = getIntent().getStringExtra(Constants.PACKAGE_INFO_KEY);
+            try {
+                sourceFile = packageInfo.applicationInfo.sourceDir;
+                isPackageInstalled = true;
+                packageInfo = getPackageManager().getPackageInfo(packageName, PackageManager.GET_ACTIVITIES
+                        | PackageManager.GET_RECEIVERS |PackageManager.GET_PERMISSIONS
+                        | PackageManager.GET_SERVICES | PackageManager.GET_PROVIDERS);
+                appNameTV.setText(packageInfo.applicationInfo.loadLabel(getPackageManager()));
+                iconIV.setImageDrawable(packageInfo.applicationInfo.loadIcon(getPackageManager()));
+
+            } catch (PackageManager.NameNotFoundException e) {
+                e.printStackTrace();
+            }
+
+        }
+        else if (getIntent()!= null && getIntent().hasExtra(Constants.APK_PATH)) {
+            sourceFile = getIntent().getStringExtra(Constants.APK_PATH);
+            isPackageInstalled = false;
+            packageInfo = getPackageManager().getPackageArchiveInfo(sourceFile,
+                    PackageManager.GET_ACTIVITIES | PackageManager.GET_RECEIVERS | PackageManager.GET_PERMISSIONS
+                            | PackageManager.GET_SERVICES | PackageManager.GET_PROVIDERS);
+            launcherCapabilitiesTV.setText(Html.fromHtml("<b>" + getString(R.string.launcher_kiosk_ready)
+                    + ": </b>" + getString(R.string.loading)));
+            appNameTV.setText(packageInfo.packageName); //not supported using default value
+            iconIV.setImageResource(R.mipmap.ic_launcher); //not supported using default value
         }
         else
             finish();
 
-        try {
-            packageInfo = getPackageManager().getPackageInfo(packageName, PackageManager.GET_ACTIVITIES
-                    | PackageManager.GET_RECEIVERS |PackageManager.GET_PERMISSIONS
-            | PackageManager.GET_SERVICES | PackageManager.GET_PROVIDERS);
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        }
 
-        appNameTV = (TextView) findViewById(R.id.textView2);
         packageNameTV = (TextView) findViewById(R.id.textView3);
         versionCodeTV = (TextView) findViewById(R.id.textView6);
         versionNameTV = (TextView) findViewById(R.id.textView7);
-        launcherCapabilitiesTV = (TextView) findViewById(R.id.textView8);
-        iconIV = (ImageView) findViewById(R.id.imageView2);
 
-        appNameTV.setText(packageInfo.applicationInfo.loadLabel(getPackageManager()));
+
         packageNameTV.setText(packageInfo.packageName);
         versionCodeTV.setText(Html.fromHtml("<b>" + getString(R.string.version_code) + ": </b>"
                 + packageInfo.versionCode));
@@ -69,10 +90,8 @@ public class ManifestViewerActivity extends AppCompatActivity {
                 + packageInfo.versionName));
 
 
+        isLauncherReady();
 
-        launcherCapabilitiesTV.setText(Html.fromHtml("<b>" + getString(R.string.launcher_kiosk_ready)
-                + ": </b>" + (isLauncherReady() ? getString(R.string.yes) : getString(R.string.no))));
-        iconIV.setImageDrawable(packageInfo.applicationInfo.loadIcon(getPackageManager()));
 
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -80,26 +99,41 @@ public class ManifestViewerActivity extends AppCompatActivity {
         recyclerView.setAdapter(new ExpansionItemsAdapter(packageInfo));
     }
 
-    private boolean isLauncherReady(){
-        ActivityInfo[] info = packageInfo.activities;
+    private void isLauncherReady(){
+        if(isPackageInstalled) {
+            boolean isLauncherReady = false;
+            ActivityInfo[] info = packageInfo.activities;
 
-        PackageManager packageManager = getPackageManager();
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.addCategory(Intent.CATEGORY_HOME);
-        intent.addCategory(Intent.CATEGORY_DEFAULT);
-        List<ResolveInfo> homeList = packageManager.queryIntentActivities(intent, 0);
+            PackageManager packageManager = getPackageManager();
+            Intent intent = new Intent(Intent.ACTION_MAIN);
+            intent.addCategory(Intent.CATEGORY_HOME);
+            intent.addCategory(Intent.CATEGORY_DEFAULT);
+            List<ResolveInfo> homeList = packageManager.queryIntentActivities(intent, 0);
 
 
-        if(homeList != null && homeList.size() > 0 && info != null && info.length > 0) {
-            for (ResolveInfo i : homeList) {
-                for (ActivityInfo j : info) {
-                    if (i.activityInfo.name.equals(j.name)) {
-                        return true;
+            if (homeList != null && homeList.size() > 0 && info != null && info.length > 0) {
+                for (ResolveInfo i : homeList) {
+                    for (ActivityInfo j : info) {
+                        if (i.activityInfo.name.equals(j.name)) {
+                            isLauncherReady =  true;
+                        }
                     }
                 }
             }
+            setLauncherCapabilitiesTV(isLauncherReady);
+        } else {
+            Utils.decodeXmlFile(this, sourceFile, true, new Utils.OnDecodeFinishListener() {
+                @Override
+                public void onDecodeFinished(String xml, boolean launcherReady) {
+                    setLauncherCapabilitiesTV(launcherReady);
+                }
+            });
         }
-        return false;
+    }
+
+    private void setLauncherCapabilitiesTV(boolean isReady){
+        launcherCapabilitiesTV.setText(Html.fromHtml("<b>" + getString(R.string.launcher_kiosk_ready)
+                + ": </b>" + (isReady ? getString(R.string.yes) : getString(R.string.no))));
     }
 
     @Override
@@ -119,7 +153,7 @@ public class ManifestViewerActivity extends AppCompatActivity {
         switch (id){
             case R.id.action_view_as_xml:
                 Intent intent = new Intent(this, XmlViewerActivity.class);
-                intent.putExtra(Constants.SOURCE_DIR, packageInfo.applicationInfo.sourceDir);
+                intent.putExtra(Constants.SOURCE_DIR, sourceFile);
                 startActivity(intent);
                 break;
         }
