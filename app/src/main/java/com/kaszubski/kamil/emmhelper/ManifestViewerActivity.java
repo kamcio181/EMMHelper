@@ -50,11 +50,11 @@ public class ManifestViewerActivity extends AppCompatActivity {
         if(getIntent()!= null && getIntent().hasExtra(Constants.PACKAGE_INFO_KEY)){
             packageName = getIntent().getStringExtra(Constants.PACKAGE_INFO_KEY);
             try {
-                sourceFile = packageInfo.applicationInfo.sourceDir;
                 isPackageInstalled = true;
                 packageInfo = getPackageManager().getPackageInfo(packageName, PackageManager.GET_ACTIVITIES
                         | PackageManager.GET_RECEIVERS |PackageManager.GET_PERMISSIONS
                         | PackageManager.GET_SERVICES | PackageManager.GET_PROVIDERS);
+                sourceFile = packageInfo.applicationInfo.sourceDir;
                 appNameTV.setText(packageInfo.applicationInfo.loadLabel(getPackageManager()));
                 iconIV.setImageDrawable(packageInfo.applicationInfo.loadIcon(getPackageManager()));
 
