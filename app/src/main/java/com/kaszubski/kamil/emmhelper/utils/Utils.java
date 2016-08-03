@@ -522,7 +522,7 @@ public class Utils {
             configMap.put(2048, "smallestScreenSize");
             configMap.put(4096, "density");
             configMap.put(8192, "layoutDirection");
-            configMap.put(1073741824, "fontScale"); //TODO to check
+            configMap.put(1073741824, "fontScale");
 
             mapSize = configMap.size();
         }
@@ -532,15 +532,6 @@ public class Utils {
                 return null;
             int strOff = stOff + LEW(xml, sitOff + strInd * 4);
             return compXmlStringAt(xml, strOff);
-        }
-
-//        private static void prtIndent(int indent, String str) {
-//            String spaces = "                                             ";
-//            prt(spaces.substring(0, Math.min(indent * 2, spaces.length())) + str);
-//        }
-
-        private static void prt(String str) {
-            System.err.print(str);
         }
 
         private static String compXmlStringAt(byte[] arr, int strOff) {
