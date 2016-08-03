@@ -230,7 +230,11 @@ public class Utils {
             int indent = 0;
             int startTagLineNo = -2;
             String tab = "      ";
+            int k = 0;
             while (off < xml.length) {
+                k++;
+                Log.e(TAG, "While "+k);
+                Log.e(TAG, "off " + off + " length " + xml.length);
                 int tag0 = LEW(xml, off);
                 int lineNo = LEW(xml, off + 2 * 4);
                 int nameNsSi = LEW(xml, off + 4 * 4);
@@ -238,6 +242,7 @@ public class Utils {
                 int endDocTag = 0x00100101;
                 int endTag = 0x00100103;
                 if (tag0 == startTag) { // XML START TAG
+                    Log.e(TAG, "start "+k);
                     if (!firstLine) {
                         if (!wasEndTagPreviously)
                             finalXML.append(">").append("\n").append("\n");
@@ -268,7 +273,7 @@ public class Utils {
                         off += 5 * 4; // Skip over the 5 words of an attribute
                         String attrName = compXmlString(xml, sitOff, stOff, attrNameSi);
 
-//                        Log.e(TAG, "name " + attrName + " flag " + attrFlags + " val " + attrResId);
+                        Log.e(TAG, "name " + attrName + " flag " + attrFlags + " val " + attrResId + " bin " + Integer.toBinaryString(attrResId));
 
                         String attrValue = attrValueSi != -1 ? compXmlString(xml,
                                 sitOff, stOff, attrValueSi) : decodeAttrValue(attrName, attrFlags, attrResId);
@@ -309,8 +314,9 @@ public class Utils {
 //                    prtIndent(indent, "<" + name + sb + ">");
                     indent++;
                     wasEndTagPreviously = false;
-
+                    Log.e(TAG, "start end "+k);
                 } else if (tag0 == endTag) { // XML END TAG
+                    Log.e(TAG, "end "+k);
                     indent--;
                     level--;
                     off += 6 * 4; // Skip over 6 words of endTag data
@@ -325,11 +331,15 @@ public class Utils {
 //                finalXML.append("</").append(name).append(">");
 //                    prtIndent(indent, "</" + name + "> (line " + startTagLineNo + "-" + lineNo + ")");
                     wasEndTagPreviously = true;
+                    Log.e(TAG, "end end "+k);
                 } else if (tag0 == endDocTag) { // END OF XML DOC TAG
+                    Log.e(TAG, "end of doc "+k);
                     break;
                 } else {
-//                    prt("  Unrecognized tag code '" + Integer.toHexString(tag0) + "' at offset " + off);
-                    break;
+                    Log.e(TAG, "unrecognized "+k);
+                    wasEndTagPreviously = false;
+                    off ++;
+                    //break;
                 }
             } // end of while loop scanning tags and attributes of XML tree
             return finalXML.toString();
@@ -361,7 +371,7 @@ public class Utils {
                     }
 
                 case 301989896: //boolean
-                    return value == -1 ? "false" : "true";
+                    return value == -1 ? "true" : "false";
                 default:
                     return "resourceID 0x" + Integer.toHexString(value);
             }
@@ -479,11 +489,15 @@ public class Utils {
                     if (valueToCheck < keyValuesList.get(i)) {
 
                         valueToCheck -= keyValuesList.get(i - 1);
+                        if(builder.toString().contains(configMap.get(keyValuesList.get(i - 1)))) //prevent wrong values and loop
+                            return "Unable to decode";
                         builder.append(configMap.get(keyValuesList.get(i - 1))).append(" | ");
                         break;
                     }
                     if (i == mapSize - 1) {
                         valueToCheck -= keyValuesList.get(mapSize - 1);
+                        if(builder.toString().contains(configMap.get(keyValuesList.get(i - 1))))
+                            return "Unable to decode";
                         builder.append(configMap.get(keyValuesList.get(mapSize - 1))).append(" | ");
                         break;
                     }
@@ -508,7 +522,7 @@ public class Utils {
             configMap.put(2048, "smallestScreenSize");
             configMap.put(4096, "density");
             configMap.put(8192, "layoutDirection");
-            configMap.put(1073741824, "fontScale");
+            configMap.put(1073741824, "fontScale"); //TODO to check
 
             mapSize = configMap.size();
         }
@@ -525,9 +539,9 @@ public class Utils {
 //            prt(spaces.substring(0, Math.min(indent * 2, spaces.length())) + str);
 //        }
 
-//        private static void prt(String str) {
-//            System.err.print(str);
-//        }
+        private static void prt(String str) {
+            System.err.print(str);
+        }
 
         private static String compXmlStringAt(byte[] arr, int strOff) {
             int strLen = arr[strOff + 1] << 8 & 0xff00 | arr[strOff] & 0xff;

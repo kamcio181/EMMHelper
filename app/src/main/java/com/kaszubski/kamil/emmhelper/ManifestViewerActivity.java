@@ -27,12 +27,13 @@ import com.kaszubski.kamil.emmhelper.utils.Utils;
 import com.kaszubski.kamil.emmhelper.utils.VerticalSpaceItemDecoration;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 public class ManifestViewerActivity extends AppCompatActivity {
     private static final String TAG = "ManifestViewerActivity";
     private PackageInfo packageInfo;
-    private TextView appNameTV, packageNameTV, versionCodeTV, versionNameTV, launcherCapabilitiesTV;
+    private TextView appNameTV, packageNameTV, versionCodeTV, versionNameTV, launcherCapabilitiesTV, installationTimeTV, lastUpdateTimeTV;
     private ImageView iconIV;
     private RecyclerView recyclerView;
     private String sourceFile;
@@ -45,6 +46,8 @@ public class ManifestViewerActivity extends AppCompatActivity {
         launcherCapabilitiesTV = (TextView) findViewById(R.id.textView8);
         appNameTV = (TextView) findViewById(R.id.textView2);
         iconIV = (ImageView) findViewById(R.id.imageView2);
+        installationTimeTV = (TextView) findViewById(R.id.textView);
+        lastUpdateTimeTV = (TextView) findViewById(R.id.textView12);
 
         String packageName;
         if(getIntent()!= null && getIntent().hasExtra(Constants.PACKAGE_INFO_KEY)){
@@ -57,6 +60,15 @@ public class ManifestViewerActivity extends AppCompatActivity {
                 sourceFile = packageInfo.applicationInfo.sourceDir;
                 appNameTV.setText(packageInfo.applicationInfo.loadLabel(getPackageManager()));
                 iconIV.setImageDrawable(packageInfo.applicationInfo.loadIcon(getPackageManager()));
+
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTimeInMillis(packageInfo.firstInstallTime);
+
+                installationTimeTV.setText(Html.fromHtml("<b>" + "Installed"
+                        + ": </b>" + String.format("%1$tb %1$te, %1$tY %1$tT", calendar)));
+                calendar.setTimeInMillis(packageInfo.lastUpdateTime);
+                lastUpdateTimeTV.setText(Html.fromHtml("<b>" + "Last update"
+                        + ": </b>" + String.format("%1$tb %1$te, %1$tY %1$tT", calendar)));
 
             } catch (PackageManager.NameNotFoundException e) {
                 e.printStackTrace();
@@ -73,6 +85,8 @@ public class ManifestViewerActivity extends AppCompatActivity {
                     + ": </b>" + getString(R.string.loading)));
             appNameTV.setText(packageInfo.packageName); //not supported using default value
             iconIV.setImageResource(R.mipmap.ic_launcher); //not supported using default value
+            installationTimeTV.setVisibility(View.GONE);
+            lastUpdateTimeTV.setVisibility(View.GONE);
         }
         else
             finish();
@@ -81,6 +95,7 @@ public class ManifestViewerActivity extends AppCompatActivity {
         packageNameTV = (TextView) findViewById(R.id.textView3);
         versionCodeTV = (TextView) findViewById(R.id.textView6);
         versionNameTV = (TextView) findViewById(R.id.textView7);
+
 
 
         packageNameTV.setText(packageInfo.packageName);

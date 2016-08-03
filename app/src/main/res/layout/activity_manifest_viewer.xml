@@ -29,6 +29,27 @@
         android:textColor="#DD000000"
         android:singleLine="true"
         android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Medium Text"
+        android:id="@+id/textView"
+        android:textSize="16sp"
+        android:textColor="#DD000000"
+        android:singleLine="true"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Medium Text"
+        android:id="@+id/textView12"
+        android:textSize="16sp"
+        android:textColor="#DD000000"
+        android:singleLine="true"
+        android:layout_marginBottom="12dp" />
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
