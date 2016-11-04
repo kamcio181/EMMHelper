@@ -34,8 +34,11 @@ import com.kaszubski.kamil.emmhelper.utils.DividerItemDecoration;
 import com.kaszubski.kamil.emmhelper.utils.Utils;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -150,7 +153,7 @@ public class ExportFragment extends Fragment {
                             i++;
                             suffix = Integer.toString(i);
                         }
-                        saveNote(name1 + suffix + fileExtension);
+                        saveToFile(name1 + suffix + fileExtension);
                     }
                 })
                 .setNegativeButton(context.getString(R.string.cancel), new DialogInterface.OnClickListener() {
@@ -177,11 +180,11 @@ public class ExportFragment extends Fragment {
         return new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                saveNote(name);
+                saveToFile(name);
             }
         };
     }
-    private void saveNote(String name){
+    private void saveToFile(String name){
         if(ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 == PackageManager.PERMISSION_GRANTED)
             new SaveToFile().execute(name);
@@ -236,7 +239,12 @@ public class ExportFragment extends Fragment {
                     recyclerView.addItemDecoration(new DividerItemDecoration(context, DividerItemDecoration.VERTICAL_LIST));
                     recyclerView.setAdapter(new RecyclerViewAdapter(dirs, dirsCount, new RecyclerViewAdapter.OnItemClickListener() {
                         @Override
-                        public void onItemClick(boolean isDir, String item) {
+                        public void onItemClick(boolean longClick, boolean isDir, String item) {
+                            if(longClick){
+                                Utils.copyToClipboard(context, path + item);
+                                Utils.showToast(context, getString(R.string.path_copied_to_clipboard));
+                                return;
+                            }
                             if (isDir) {
                                 if (new File(path + item).canRead()) {
                                     path = path + item;
@@ -246,7 +254,10 @@ public class ExportFragment extends Fragment {
                             } else {
                                 if(fileExtension == null){ //file browser
                                     File file = new File(path + item);
-                                    Log.e(TAG, item.substring(0, item.lastIndexOf(".")));
+                                    if(!item.contains(".")) {
+                                        Utils.showToast(context, getString(R.string.unknown_extension));
+                                        return;
+                                    }
                                     String mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(item.substring(item.lastIndexOf(".")+1));
 
                                     Intent intent = new Intent();
@@ -286,18 +297,47 @@ public class ExportFragment extends Fragment {
             File file = new File(path, params[0]);
             FileOutputStream f;
 
-            try {
-                f = new FileOutputStream(file);
-                PrintWriter p = new PrintWriter(f);
-                for(String line : arrayToSave)
-                    p.println(line);
-                p.flush();
-                p.close();
-                f.close();
-                return true;
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
+            if(arrayToSave != null) {
+                try {
+                    f = new FileOutputStream(file);
+                    PrintWriter p = new PrintWriter(f);
+                    for (String line : arrayToSave)
+                        p.println(line);
+                    p.flush();
+                    p.close();
+                    f.close();
+                    return true;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    return false;
+                }
+            } else { //file in tem dir
+                InputStream in;
+                OutputStream out;
+                try {
+
+                    in = new FileInputStream(new File(context.getCacheDir(),Constants.TEMP_FILE));
+                    out = new FileOutputStream(file);
+
+                    byte[] buffer = new byte[1024];
+                    int read;
+                    while ((read = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, read);
+                    }
+                    in.close();
+
+                    // write the output file
+                    out.flush();
+                    out.close();
+
+                    // delete the original file
+                    new File(context.getCacheDir(), Constants.TEMP_FILE).delete();
+
+                    return true;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return false;
+                }
             }
         }
 
@@ -313,65 +353,76 @@ public class ExportFragment extends Fragment {
                 Utils.showToast(context, context.getString(R.string.failed));
         }
     }
-}
 
-class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder>{
-    private static RecyclerViewAdapter.OnItemClickListener listener;
-    private static ArrayList<String> items;
-    private static int dirsCount;
+    static class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder>{
+        private static RecyclerViewAdapter.OnItemClickListener listener;
+        private static ArrayList<String> items;
+        private static int dirsCount;
 
-    public interface OnItemClickListener{
-        void onItemClick(boolean isDir, String item);
-    }
+        interface OnItemClickListener{
+            void onItemClick(boolean longClick, boolean isDir, String item);
+        }
 
-    public RecyclerViewAdapter(ArrayList<String> items, int dirsCount, OnItemClickListener listener) {
-        RecyclerViewAdapter.items = items;
-        RecyclerViewAdapter.listener = listener;
-        RecyclerViewAdapter.dirsCount = dirsCount;
-    }
+        RecyclerViewAdapter(ArrayList<String> items, int dirsCount, OnItemClickListener listener) {
+            RecyclerViewAdapter.items = items;
+            RecyclerViewAdapter.listener = listener;
+            RecyclerViewAdapter.dirsCount = dirsCount;
+        }
 
-    @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.single_line_with_icon_item, parent, false));
-    }
+        @Override
+        public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.single_line_with_icon_item, parent, false));
+        }
 
-    @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
-        holder.titleTextView.setText(items.get(position));
-        if(position>=dirsCount)
-            holder.icon.setImageResource(R.drawable.ic_exp_grey_file);
-        else
-            holder.icon.setImageResource(R.drawable.ic_exp_grey_folder);
-    }
+        @Override
+        public void onBindViewHolder(ViewHolder holder, int position) {
+            holder.titleTextView.setText(items.get(position));
+            if(position>=dirsCount)
+                holder.icon.setImageResource(R.drawable.ic_exp_grey_file);
+            else
+                holder.icon.setImageResource(R.drawable.ic_exp_grey_folder);
+        }
 
-    public void changeData(ArrayList<String> items, int dirsCount){
-        RecyclerViewAdapter.items = items;
-        RecyclerViewAdapter.dirsCount = dirsCount;
-        notifyDataSetChanged();
-    }
+        void changeData(ArrayList<String> items, int dirsCount){
+            RecyclerViewAdapter.items = items;
+            RecyclerViewAdapter.dirsCount = dirsCount;
+            notifyDataSetChanged();
+        }
 
-    @Override
-    public int getItemCount() {
-        return items.size();
-    }
+        @Override
+        public int getItemCount() {
+            return items.size();
+        }
 
-    static class ViewHolder extends RecyclerView.ViewHolder{
-        public TextView titleTextView;
-        public ImageView icon;
+        static class ViewHolder extends RecyclerView.ViewHolder{
+            TextView titleTextView;
+            ImageView icon;
 
-        public ViewHolder(final View itemView){
-            super(itemView);
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if(listener != null)
-                        listener.onItemClick(getLayoutPosition()<dirsCount, items.get(getLayoutPosition()));
-                }
-            });
+            ViewHolder(final View itemView){
+                super(itemView);
+                itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if(listener != null)
+                            listener.onItemClick(false, getLayoutPosition()<dirsCount, items.get(getLayoutPosition()));
+                    }
+                });
 
-            titleTextView = (TextView) itemView.findViewById(R.id.textView2);
-            icon = (ImageView) itemView.findViewById(R.id.imageView);
+                itemView.setOnLongClickListener(new View.OnLongClickListener() {
+                    @Override
+                    public boolean onLongClick(View v) {
+                        if(listener != null)
+                            listener.onItemClick(true, getLayoutPosition()<dirsCount, items.get(getLayoutPosition()));
+                        return true;
+                    }
+                });
 
+                titleTextView = (TextView) itemView.findViewById(R.id.textView2);
+                icon = (ImageView) itemView.findViewById(R.id.imageView);
+
+            }
         }
     }
 }
+
+

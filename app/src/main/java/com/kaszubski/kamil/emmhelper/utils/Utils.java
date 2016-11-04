@@ -1,6 +1,7 @@
 package com.kaszubski.kamil.emmhelper.utils;
 
 import android.app.Dialog;
+import android.app.enterprise.license.EnterpriseLicenseManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -11,6 +12,8 @@ import android.os.Environment;
 import android.provider.Settings;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
+import android.util.SparseArray;
+import android.util.SparseIntArray;
 import android.widget.Toast;
 
 import com.kaszubski.kamil.emmhelper.R;
@@ -30,7 +33,7 @@ import java.util.zip.ZipFile;
 public class Utils {
     private static final String TAG = "Utils";
     private static Toast toast;
-
+    private static final SparseIntArray mapCodes = new SparseIntArray();
 
 
     public static void showToast(Context context, String message){
@@ -81,12 +84,69 @@ public class Utils {
         new ExtractAPK(context, packageInfo).execute();
     }
 
-    static class ExtractAPK extends AsyncTask<Void, Void, Boolean>{
+    //Maps error codes to error descriptions
+    private static void populateCodes() {
+        mapCodes.clear();
+        mapCodes.put(EnterpriseLicenseManager.ERROR_INTERNAL,
+                R.string.err_internal);
+
+        mapCodes.put(EnterpriseLicenseManager.ERROR_INTERNAL_SERVER,
+                R.string.err_internal_server);
+
+        mapCodes.put(EnterpriseLicenseManager.ERROR_INVALID_LICENSE,
+                R.string.err_licence_invalid_license);
+
+        mapCodes.put(EnterpriseLicenseManager.ERROR_INVALID_PACKAGE_NAME,
+                R.string.err_invalid_package_name);
+
+        mapCodes.put(EnterpriseLicenseManager.ERROR_LICENSE_TERMINATED,
+                R.string.err_licence_terminated);
+
+        mapCodes.put(EnterpriseLicenseManager.ERROR_NETWORK_DISCONNECTED,
+                R.string.err_network_disconnected);
+
+        mapCodes.put(EnterpriseLicenseManager.ERROR_NETWORK_GENERAL,
+                R.string.err_network_general);
+
+        mapCodes.put(EnterpriseLicenseManager.ERROR_NOT_CURRENT_DATE,
+                R.string.err_unknown);
+
+        mapCodes.put(EnterpriseLicenseManager.ERROR_NULL_PARAMS,
+                R.string.err_not_current_date);
+
+        mapCodes.put(EnterpriseLicenseManager.ERROR_SIGNATURE_MISMATCH,
+                R.string.err_signature_mismatch);
+
+        mapCodes.put(EnterpriseLicenseManager.ERROR_UNKNOWN,
+                R.string.err_null_params);
+
+        mapCodes.put(
+                EnterpriseLicenseManager.ERROR_USER_DISAGREES_LICENSE_AGREEMENT,
+                R.string.err_user_disagrees_license_agreement);
+        mapCodes.put(EnterpriseLicenseManager.ERROR_VERSION_CODE_MISMATCH,
+                R.string.err_version_code_mismatch);
+    }
+
+    /**
+     Gets the message to be displayed to user by passing in code
+     @param  context the Activity context
+     @param  code    the error code
+     @return         the message corresponding to the code
+     */
+    public static String getMessage(Context context, int code) {
+        if(mapCodes.size() == 0)
+            populateCodes();
+        if (mapCodes.get(code) != 0)
+            return context.getString(mapCodes.get(code));
+        else return "";
+    }
+
+    private static class ExtractAPK extends AsyncTask<Void, Void, Boolean>{
         private Context context;
         private PackageInfo packageInfo;
         private String outputFile;
 
-        public ExtractAPK(Context context, PackageInfo packageInfo){
+        ExtractAPK(Context context, PackageInfo packageInfo){
             this.context = context;
             this.packageInfo = packageInfo;
         }
@@ -110,7 +170,7 @@ public class Utils {
 
 
                 in = new FileInputStream(source);
-                outputFile = dir.getPath() + "/" + source.getName();
+                outputFile = dir.getPath() + "/" + packageInfo.packageName + ".apk";
                 out = new FileOutputStream(outputFile);
 
                 byte[] buffer = new byte[1024];
@@ -149,16 +209,16 @@ public class Utils {
         new DecodeXML(context, source, lookingForLauncher, listener).execute();
     }
 
-    static class DecodeXML extends AsyncTask<Void, Void, String> {
+    private static class DecodeXML extends AsyncTask<Void, Void, String> {
         private Context context;
         private String source;
         private boolean lookingForLauncher;
         private OnDecodeFinishListener listener;
-        private static HashMap<Integer, String> configMap;
+        private static SparseArray<String> configMap;
         private static int mapSize;
         private static boolean launcherReady;
 
-        public DecodeXML(Context context, String source, boolean lookingForLauncher, OnDecodeFinishListener listener) {
+        DecodeXML(Context context, String source, boolean lookingForLauncher, OnDecodeFinishListener listener) {
             this.context = context;
             this.source = source;
             this.lookingForLauncher = lookingForLauncher;
@@ -169,7 +229,7 @@ public class Utils {
         protected String doInBackground(Void... params) {
             try {
                 String fileName = source;
-                InputStream is = null;
+                InputStream is;
                 ZipFile zip = null;
                 if (fileName.endsWith(".apk") || fileName.endsWith(".zip")) {
                     zip = new ZipFile(fileName);
@@ -476,29 +536,24 @@ public class Utils {
                 initConfigMap();
 
             int valueToCheck = value;
-            Integer[] keyValues = new Integer[mapSize];
-            configMap.keySet().toArray(keyValues);
-            ArrayList<Integer> keyValuesList = new ArrayList<>(mapSize);
-            keyValuesList.addAll(Arrays.asList(keyValues));
-            Collections.sort(keyValuesList);
             StringBuilder builder = new StringBuilder();
 
             while (valueToCheck != 0) {
                 for (int i = 0; i < mapSize; i++) {
 
-                    if (valueToCheck < keyValuesList.get(i)) {
+                    if (valueToCheck < configMap.keyAt(i)) {
 
-                        valueToCheck -= keyValuesList.get(i - 1);
-                        if(builder.toString().contains(configMap.get(keyValuesList.get(i - 1)))) //prevent wrong values and loop
+                        valueToCheck -= configMap.keyAt(i - 1);
+                        if(builder.toString().contains(configMap.valueAt(i -1))) //prevent wrong values and loop
                             return "Unable to decode";
-                        builder.append(configMap.get(keyValuesList.get(i - 1))).append(" | ");
+                        builder.append(configMap.valueAt(i - 1)).append(" | ");
                         break;
                     }
                     if (i == mapSize - 1) {
-                        valueToCheck -= keyValuesList.get(mapSize - 1);
-                        if(builder.toString().contains(configMap.get(keyValuesList.get(i - 1))))
+                        valueToCheck -= configMap.keyAt(mapSize - 1);
+                        if(builder.toString().contains(configMap.valueAt(i - 1)))
                             return "Unable to decode";
-                        builder.append(configMap.get(keyValuesList.get(mapSize - 1))).append(" | ");
+                        builder.append(configMap.valueAt(mapSize - 1)).append(" | ");
                         break;
                     }
                 }
@@ -507,7 +562,7 @@ public class Utils {
         }
 
         private static void initConfigMap() {
-            configMap = new HashMap<>(15);
+            configMap = new SparseArray<>(15);
             configMap.put(1, "mcc");
             configMap.put(2, "mnc");
             configMap.put(4, "locale");

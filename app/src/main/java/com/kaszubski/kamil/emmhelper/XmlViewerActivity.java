@@ -13,20 +13,16 @@ import android.widget.TextView;
 import com.kaszubski.kamil.emmhelper.utils.Constants;
 import com.kaszubski.kamil.emmhelper.utils.Utils;
 
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 public class XmlViewerActivity extends AppCompatActivity {
     private static final String TAG = "XMLViewerActivity";
     private TextView textView;
-    private String xml;
     private ProgressDialog progressDialog;
+    private String manifest;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,7 +41,7 @@ public class XmlViewerActivity extends AppCompatActivity {
             public void onDecodeFinished(String xml, boolean launcherReady) {
                 if(xml != null)
                     textView.setText(xml);
-                XmlViewerActivity.this.xml = xml;
+                XmlViewerActivity.this.manifest = xml;
                 progressDialog.dismiss();
             }
         });
@@ -68,25 +64,24 @@ public class XmlViewerActivity extends AppCompatActivity {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
+        if(manifest == null)
+            manifest = textView.getText().toString().trim();
         switch (id){
             case R.id.action_export_to_txt:
-
-                String manifest = textView.getText().toString().trim();
-
                 if(manifest.length() > 0){
-                    Intent intent = new Intent(this, ExportActivity.class);
-                    intent.putExtra(Constants.STRING_KEY, manifest);
-                    intent.putExtra(Constants.FILE_FORMAT_KEY, Constants.TXT_FILE_EXTENSION);
-                    startActivity(intent);
+                    new SaveToFile().execute();
                 } else {
                     Utils.showToast(this, getString(R.string.manifest_is_empty));
                 }
                 break;
             case R.id.action_share:
-                if(xml != null)
-                    Utils.shareViaList(this, xml);
-                 else
+                if(manifest.length() > 0) {
+                    try {
+                        Utils.shareViaList(this, manifest);
+                    } catch (RuntimeException e){
+                        Utils.showToast(this, "Manifest is too big. Please export it to file");
+                    }
+                } else
                     Utils.showToast(this, getString(R.string.manifest_file_is_empty));
                 break;
         }
@@ -94,5 +89,44 @@ public class XmlViewerActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    private class SaveToFile extends AsyncTask<String, Void, Boolean>{
+        @Override
+        protected Boolean doInBackground(String... params) {
+            File file = new File(XmlViewerActivity.this.getCacheDir(), Constants.TEMP_FILE);
+            FileOutputStream f;
 
+            try {
+                f = new FileOutputStream(file);
+                PrintWriter p = new PrintWriter(f);
+                String[] arrayToSave = manifest.split("\n");
+                Log.e(TAG, "Lines " + arrayToSave.length);
+                for (String line : arrayToSave)
+                    p.println(line);
+                p.flush();
+                p.close();
+                f.close();
+                return true;
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
+
+        }
+
+        @Override
+        protected void onPostExecute(Boolean aBoolean) {
+            super.onPostExecute(aBoolean);
+
+            if(aBoolean) {
+                Intent intent = new Intent(XmlViewerActivity.this, ExportActivity.class);
+                intent.putExtra(Constants.FILE_FORMAT_KEY, Constants.TXT_FILE_EXTENSION);
+                startActivity(intent);
+            }
+            else
+                Utils.showToast(XmlViewerActivity.this, XmlViewerActivity.this.getString(R.string.failed));
+        }
+    }
 }
+
+
+

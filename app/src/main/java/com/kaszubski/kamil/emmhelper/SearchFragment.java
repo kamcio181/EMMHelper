@@ -41,6 +41,9 @@ public class SearchFragment extends Fragment {
         // Required empty public constructor
     }
 
+    interface OnItemClickListener {
+        void onItemClick(View view, PackageInfo packageInfo, boolean isLong);
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -66,7 +69,7 @@ public class SearchFragment extends Fragment {
             if (recyclerView.getAdapter() == null) {
                 recyclerView.setLayoutManager(new LinearLayoutManager(context));
                 recyclerView.addItemDecoration(new DividerItemDecoration(context, DividerItemDecoration.VERTICAL_LIST));
-                recyclerView.setAdapter(new SearchRecyclerAdapter(context, results, new SearchRecyclerAdapter.OnItemClickListener() {
+                recyclerView.setAdapter(new SearchRecyclerAdapter(context, results, new OnItemClickListener() {
                     @Override
                     public void onItemClick(View view, final PackageInfo packageInfo, boolean isLong) {
                         final String packageName = packageInfo.packageName;
@@ -124,106 +127,104 @@ public class SearchFragment extends Fragment {
     }
 
     public ArrayList<String> getExportList(){
-        return SearchRecyclerAdapter.getExport();
+        return ((SearchRecyclerAdapter)recyclerView.getAdapter()).getExport();
     }
 
     public ProgressBar getProgressBar() {
         return progressBar;
     }
-}
-class SearchRecyclerAdapter extends RecyclerView.Adapter<SearchRecyclerAdapter.DoubleLineAvatarViewHolder> {
-    private static OnItemClickListener listener;
-    private static List<PackageInfo> packages;
-    private static Context context;
-    private static ArrayList<String> export = new ArrayList<>();
 
-    public interface OnItemClickListener {
-        void onItemClick(View view, PackageInfo packageInfo, boolean isLong);
-    }
+    class SearchRecyclerAdapter extends RecyclerView.Adapter<SearchRecyclerAdapter.DoubleLineAvatarViewHolder> {
+        private OnItemClickListener listener;
+        private List<PackageInfo> packages;
+        private Context context;
+        private ArrayList<String> export = new ArrayList<>();
 
-    public SearchRecyclerAdapter(Context context, List<PackageInfo> packages,
-                                 OnItemClickListener listener) {
-        SearchRecyclerAdapter.context = context;
-        SearchRecyclerAdapter.packages = packages;
-        SearchRecyclerAdapter.listener = listener;
-        setHasStableIds(true);
-    }
+        SearchRecyclerAdapter(Context context, List<PackageInfo> packages,
+                              OnItemClickListener listener) {
+            this.context = context;
+            this.packages = packages;
+            this.listener = listener;
+            setHasStableIds(true);
+        }
 
-    public void setResults(List<PackageInfo> packages) {
-        SearchRecyclerAdapter.packages = packages;
-        notifyDataSetChanged();
-    }
+        void setResults(List<PackageInfo> packages) {
+            this.packages = packages;
+            notifyDataSetChanged();
+        }
 
-    @Override
-    public DoubleLineAvatarViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        return new DoubleLineAvatarViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.double_line_avatar_recycler_view_item, parent, false));
-    }
+        @Override
+        public DoubleLineAvatarViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            return new DoubleLineAvatarViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.double_line_avatar_recycler_view_item, parent, false));
+        }
 
-    @Override
-    public void onBindViewHolder(DoubleLineAvatarViewHolder holder, int position) {
-        holder.avatarImageView.setImageDrawable(packages.get(position).applicationInfo.loadIcon(context.getPackageManager()));
-        holder.titleTextView.setText(String.valueOf(packages.get(position).applicationInfo.loadLabel(context.getPackageManager())));
-        holder.subtitleTextView.setText(packages.get(position).packageName);
-        if(export.contains(packages.get(position).packageName))
-            holder.itemView.setBackgroundColor(Color.LTGRAY);
-        else
-            holder.itemView.setBackgroundColor(Color.WHITE);
-    }
+        @Override
+        public void onBindViewHolder(DoubleLineAvatarViewHolder holder, int position) {
+            holder.avatarImageView.setImageDrawable(packages.get(position).applicationInfo.loadIcon(context.getPackageManager()));
+            holder.titleTextView.setText(String.valueOf(packages.get(position).applicationInfo.loadLabel(context.getPackageManager())));
+            holder.subtitleTextView.setText(packages.get(position).packageName);
+            if(export.contains(packages.get(position).packageName))
+                holder.itemView.setBackgroundColor(Color.LTGRAY);
+            else
+                holder.itemView.setBackgroundColor(Color.WHITE);
+        }
 
-    @Override
-    public int getItemCount() {
-        return packages.size();
-    }
+        @Override
+        public int getItemCount() {
+            return packages.size();
+        }
 
-    static class DoubleLineAvatarViewHolder extends RecyclerView.ViewHolder {
-        public TextView titleTextView, subtitleTextView;
-        public ImageView avatarImageView;
-        public View itemView;
+        class DoubleLineAvatarViewHolder extends RecyclerView.ViewHolder {
+            TextView titleTextView, subtitleTextView;
+            ImageView avatarImageView;
+            View itemView;
 
-        public DoubleLineAvatarViewHolder(final View itemView) {
-            super(itemView);
-            this.itemView = itemView;
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    String packageName = packages.get(getLayoutPosition()).packageName;
-                    if(export.contains(packageName)){
-                        export.remove(packageName);
-                        itemView.setBackgroundColor(Color.WHITE);
-                        Utils.showToast(context, context.getString(R.string.package_name_removed_from_export_list));
-                    } else {
-                        export.add(packageName);
-                        itemView.setBackgroundColor(Color.LTGRAY);
-                        Utils.showToast(context, context.getString(R.string.package_name_added_to_export_list));
+            DoubleLineAvatarViewHolder(final View itemView) {
+                super(itemView);
+                this.itemView = itemView;
+                itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        String packageName = packages.get(getLayoutPosition()).packageName;
+                        if(export.contains(packageName)){
+                            export.remove(packageName);
+                            itemView.setBackgroundColor(Color.WHITE);
+                            Utils.showToast(context, context.getString(R.string.package_name_removed_from_export_list));
+                        } else {
+                            export.add(packageName);
+                            itemView.setBackgroundColor(Color.LTGRAY);
+                            Utils.showToast(context, context.getString(R.string.package_name_added_to_export_list));
+                        }
                     }
-                }
-            });
-            itemView.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View v) {
-                    if(listener != null)
-                        listener.onItemClick(itemView, packages.get(getLayoutPosition()), true);
-                    return true;
-                }
-            });
+                });
+                itemView.setOnLongClickListener(new View.OnLongClickListener() {
+                    @Override
+                    public boolean onLongClick(View v) {
+                        if(listener != null)
+                            listener.onItemClick(itemView, packages.get(getLayoutPosition()), true);
+                        return true;
+                    }
+                });
 
-            avatarImageView = (ImageView) itemView.findViewById(R.id.imageView2);
-            titleTextView = (TextView) itemView.findViewById(R.id.textView2);
-            subtitleTextView = (TextView) itemView.findViewById(R.id.textView3);
+                avatarImageView = (ImageView) itemView.findViewById(R.id.imageView2);
+                titleTextView = (TextView) itemView.findViewById(R.id.textView2);
+                subtitleTextView = (TextView) itemView.findViewById(R.id.textView3);
+            }
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return packages.get(position).applicationInfo.uid;
+        }
+
+        ArrayList<String> getExport() {
+            return export;
+        }
+
+        void clearExport() {
+            this.export = new ArrayList<>();
+            notifyDataSetChanged();
         }
     }
-
-    @Override
-    public long getItemId(int position) {
-        return packages.get(position).applicationInfo.uid;
-    }
-
-    public static ArrayList<String> getExport() {
-        return export;
-    }
-
-    public void clearExport() {
-        SearchRecyclerAdapter.export = new ArrayList<>();
-        notifyDataSetChanged();
-    }
 }
+

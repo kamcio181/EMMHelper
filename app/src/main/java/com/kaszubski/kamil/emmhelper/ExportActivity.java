@@ -23,7 +23,6 @@ import com.kaszubski.kamil.emmhelper.utils.Utils;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class ExportActivity extends AppCompatActivity implements View.OnClickListener{
     private static final String TAG = "ExportActivity";
@@ -31,7 +30,7 @@ public class ExportActivity extends AppCompatActivity implements View.OnClickLis
     private boolean exit = false;
     private Handler handler = new Handler();
     private Runnable exitRunnable;
-    private ArrayList<String> arrayToSave = new ArrayList<>();
+    private ArrayList<String> arrayToSave;
     private FragmentManager fragmentManager;
 
     @Override
@@ -47,12 +46,12 @@ public class ExportActivity extends AppCompatActivity implements View.OnClickLis
         String fileExtension = intent.getStringExtra(Constants.FILE_FORMAT_KEY);
         fragmentManager = getSupportFragmentManager();
 
-        if(intent.hasExtra(Constants.STRING_KEY)){ //save string i.e. manifest
-            arrayToSave.addAll(Arrays.asList(intent.getStringExtra(Constants.STRING_KEY).split("\n")));
-        } else if (intent.hasExtra(Constants.ARRAY_KEY)){ //save string array list i.e. packageNames
+//        if(intent.hasExtra(Constants.STRING_KEY)){ //save string i.e. manifest
+//            arrayToSave.addAll(Arrays.asList(intent.getStringExtra(Constants.STRING_KEY).split("\n")));
+//        } else
+        if (intent.hasExtra(Constants.ARRAY_KEY)){ //save string array list i.e. packageNames
             arrayToSave = intent.getStringArrayListExtra(Constants.ARRAY_KEY);
-        } else
-            finish();
+        }
 
         fragmentManager.beginTransaction().
                 replace(R.id.container, ExportFragment.newInstance(fileExtension, arrayToSave), Constants.FRAGMENT_EXPORT).

@@ -32,11 +32,17 @@
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".ManifestViewerActivity"
-            android:screenOrientation="portrait"
-            android:label="@string/manifest_viewer_activity" />
-        <activity android:name=".XmlViewerActivity"
+            android:label="@string/manifest_viewer_activity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".XmlViewerActivity"
             android:label="@string/xml_manifest_viewer"
             android:screenOrientation="portrait" />
+        <receiver android:name=".LicenseReceiver">
+            <intent-filter>
+                <action android:name="edm.intent.action.license.status" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

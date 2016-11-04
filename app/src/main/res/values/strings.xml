@@ -4,6 +4,22 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
+
+    <!-- License Error Code. -->
+    <string name="err_internal">Internal error</string>
+    <string name="err_internal_server">Internal server error</string>
+    <string name="err_licence_invalid_license">Invalid license</string>
+    <string name="err_invalid_package_name">Invalid package name</string>
+    <string name="err_licence_terminated">License terminated</string>
+    <string name="err_network_disconnected">Network disconnected</string>
+    <string name="err_network_general">Network general error</string>
+    <string name="err_unknown">Error unknown</string>
+    <string name="err_not_current_date">Not current date</string>
+    <string name="err_null_params">NULL params</string>
+    <string name="err_user_disagrees_license_agreement">User disagrees EULA</string>
+    <string name="err_signature_mismatch">Signature mismatch</string>
+    <string name="err_version_code_mismatch">Version code mismatch</string>
+
     <string name="manifest_viewer_activity">Manifest Viewer</string>
     <string name="activities">Activities</string>
     <string name="receivers">Receivers</string>
@@ -54,10 +70,10 @@
     <string name="application_list">Application list</string>
     <string name="view_as_xml">View as xml</string>
     <string name="export_to_txt">Export to txt</string>
-    <string name="view_manifest">View manifest</string>
+    <string name="view_manifest">View manifest from apk</string>
     <string name="file_explorer">File explorer</string>
     <string name="hostname_ips">Hostname IPs</string>
-    <string name="put_host_name_here">put host name here</string>
+    <string name="put_host_name_here">Hostname</string>
     <string name="list_ip_addresses">List IP addresses</string>
     <string name="ip_addresses">IP addresses:</string>
     <string name="decoding_manifest_file">Decoding manifest file</string>
@@ -65,12 +81,21 @@
     <string name="manifest_file_is_empty">Manifest file is empty</string>
     <string name="share_ips">Share IPs</string>
     <string name="xml_manifest_viewer">XML Manifest Viewer</string>
-    <string name="loading">Loading...</string>
+    <string name="loading">Loading…</string>
+    <string name="elm_license_here">ELM license</string>
+    <string name="receiver_was_unregistered">Receiver was already unregistered</string>
+    <string name="clear">Clear</string>
+    <string name="checking_license">Checking license</string>
+    <string name="null_action">null action</string>
+    <string name="unknown_extension">Unknown extension</string>
+    <string name="path_copied_to_clipboard">Path copied to clipboard</string>
+    <string name="check_elm_key">Check ELM key</string>
+
     <string-array name="package_menu">
-        <item>View info</item>
+        <item>View information</item>
         <item>View manifest</item>
         <item>Copy package name</item>
         <item>Share package name</item>
-        <item>Extract APK</item>
+        <item>Extract apk file</item>
     </string-array>
 </resources>

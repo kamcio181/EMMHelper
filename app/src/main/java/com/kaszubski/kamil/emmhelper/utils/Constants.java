@@ -2,7 +2,7 @@ package com.kaszubski.kamil.emmhelper.utils;
 
 public interface Constants {
     String ARRAY_KEY = "array";
-    String STRING_KEY = "string";
+    String ERROR_CODE = "errorCode";
     String PACKAGE_INFO_KEY = "packageInfo";
     String APK_PATH = "apkPath";
     String SOURCE_DIR = "sourceDir";
@@ -10,11 +10,18 @@ public interface Constants {
     String TXT_FILE_EXTENSION = ".txt";
     String CSV_FILE_EXTENSION = ".csv";
     String APK_FILE_EXTENSION = ".apk";
+    String TEMP_FILE = "tempFile";
 
     String FRAGMENT_SEARCH = "SearchFragment";
-    String FRAGMENT_IP_FINDER = "IPFinderFragment";
+    String FRAGMENT_IP_FIND = "IPFindFragment";
     String FRAGMENT_EXPORT = "ExportFragment";
+    String FRAGMENT_LICENSE_CHECK = "LicenseCheckFragment";
+
+    String SUCCESS_ACTION = "com.kaszubski.kamil.emmhelper.ACTION_SUCCESS";
+    String FAILURE_ACTION = "com.kaszubski.kamil.emmhelper.ACTION_FAILURE";
 
     int WRITE_PERMISSION = 0;
     int INTERNET_PERMISSION = 1;
+
+    int DEFAULT_ERROR = -1;
 }

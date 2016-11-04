@@ -6,8 +6,8 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.TextInputEditText;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
@@ -17,7 +17,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.kaszubski.kamil.emmhelper.utils.Constants;
@@ -30,8 +29,7 @@ import java.util.Arrays;
 
 public class IPFinderFragment extends Fragment implements View.OnClickListener{
     private static final String TAG = "IPFinderFragment";
-    private ProgressBar progressBar;
-    private EditText editText;
+    private TextInputEditText editText;
     private TextView textView, textView2;
     private Button button;
     private AsyncTask listAsync;
@@ -55,8 +53,7 @@ public class IPFinderFragment extends Fragment implements View.OnClickListener{
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        progressBar = (ProgressBar) view.findViewById(R.id.progressBar);
-        editText = (EditText) view.findViewById(R.id.editText);
+        editText = (TextInputEditText) view.findViewById(R.id.editText);
         textView = (TextView) view.findViewById(R.id.textView10);
         textView2 = (TextView) view.findViewById(R.id.textView11);
         button = (Button) view.findViewById(R.id.button);
@@ -94,7 +91,6 @@ public class IPFinderFragment extends Fragment implements View.OnClickListener{
         if(editText.getText().toString().trim().length()>0) {
             if (listAsync != null && listAsync.getStatus() != AsyncTask.Status.FINISHED) {
                 listAsync.cancel(true);
-                progressBar.setVisibility(View.INVISIBLE);
             }
             listAsync = new ListSync().execute(editText.getText().toString().trim());
         } else {
@@ -108,14 +104,12 @@ public class IPFinderFragment extends Fragment implements View.OnClickListener{
         protected void onPreExecute() {
             super.onPreExecute();
 
-            progressBar.setVisibility(View.VISIBLE);
             textView.setText("");
         }
 
         @Override
         protected void onPostExecute(Boolean aBoolean) {
             super.onPostExecute(aBoolean);
-            progressBar.setVisibility(View.INVISIBLE);
             if(aBoolean){
                 textView.setText(ipList.trim());
             } else {

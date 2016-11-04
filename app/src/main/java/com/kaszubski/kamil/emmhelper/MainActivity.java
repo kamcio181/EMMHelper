@@ -9,7 +9,6 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.TransactionTooLargeException;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
@@ -66,8 +65,6 @@ public class MainActivity extends AppCompatActivity
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         fragmentManager = getSupportFragmentManager();
-
-
         drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if(drawer != null)
             setDrawer();
@@ -135,13 +132,17 @@ public class MainActivity extends AppCompatActivity
                     new LoadPackages().execute();
 
                     break;
-                case Constants.FRAGMENT_IP_FINDER:
+                case Constants.FRAGMENT_IP_FIND:
                     longTextTitleMode(false);
                     setTitle(getString(R.string.hostname_ips));
                     getMenuInflater().inflate(R.menu.fragment_ip_finder, menu);
                     break;
                 case Constants.FRAGMENT_EXPORT:
                     longTextTitleMode(true);
+                    break;
+                case Constants.FRAGMENT_LICENSE_CHECK:
+                    longTextTitleMode(false);
+                    setTitle(getString(R.string.check_elm_key));
                     break;
             }
         }
@@ -193,7 +194,7 @@ public class MainActivity extends AppCompatActivity
                 if(fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH) != null)
                     export = ((SearchFragment)fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH)).getExportList();
                 else
-                    export = ((IPFinderFragment)fragmentManager.findFragmentByTag(Constants.FRAGMENT_IP_FINDER)).getExportList();
+                    export = ((IPFinderFragment)fragmentManager.findFragmentByTag(Constants.FRAGMENT_IP_FIND)).getExportList();
                 if(export != null && export.size()>0){
                     Intent intent = new Intent(this, ExportActivity.class);
                     intent.putExtra(Constants.ARRAY_KEY, export);
@@ -207,8 +208,8 @@ public class MainActivity extends AppCompatActivity
                 ((SearchFragment)fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH)).clearExportList();
                 break;
             case R.id.action_share:
-                if(fragmentManager.findFragmentByTag(Constants.FRAGMENT_IP_FINDER) != null){
-                    ArrayList<String> list = ((IPFinderFragment)fragmentManager.findFragmentByTag(Constants.FRAGMENT_IP_FINDER)).getExportList();
+                if(fragmentManager.findFragmentByTag(Constants.FRAGMENT_IP_FIND) != null){
+                    ArrayList<String> list = ((IPFinderFragment)fragmentManager.findFragmentByTag(Constants.FRAGMENT_IP_FIND)).getExportList();
                     if(list != null && list.size()>0){
                         StringBuilder builder = new StringBuilder();
                         for(String s : list)
@@ -248,9 +249,12 @@ public class MainActivity extends AppCompatActivity
                 break;
             case R.id.nav_ip_for_hostname:
                 fragmentManager.beginTransaction().
-                        replace(R.id.container, new IPFinderFragment(), Constants.FRAGMENT_IP_FINDER).
+                        replace(R.id.container, new IPFinderFragment(), Constants.FRAGMENT_IP_FIND).
                         setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN).commit();
                 break;
+            case R.id.nav_license_checker:
+                fragmentManager.beginTransaction().replace(R.id.container, new LicenseCheckFragment(), Constants.FRAGMENT_LICENSE_CHECK).
+                        setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN).commit();
         }
         return true;
     }
@@ -337,7 +341,7 @@ public class MainActivity extends AppCompatActivity
             case Constants.INTERNET_PERMISSION: {
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Fragment fragment = fragmentManager.findFragmentByTag(Constants.FRAGMENT_IP_FINDER);
+                    Fragment fragment = fragmentManager.findFragmentByTag(Constants.FRAGMENT_IP_FIND);
                     if(fragment != null)
                         ((IPFinderFragment)fragment).searchIPs();
                 } else {
@@ -402,11 +406,11 @@ public class MainActivity extends AppCompatActivity
     class SearchPackages extends AsyncTask<String, Void, List<PackageInfo>>{
         private boolean searchInCurrentResults;
 
-        public SearchPackages(boolean searchInCurrentResults){
+        SearchPackages(boolean searchInCurrentResults){
             this.searchInCurrentResults = searchInCurrentResults;
         }
 
-        public SearchPackages(){
+        SearchPackages(){
             searchInCurrentResults = false;
         }
 
