@@ -14,9 +14,17 @@
         <item
             android:id="@+id/nav_ip_for_hostname"
             android:title="@string/hostname_ips" />
-
         <item
             android:id="@+id/nav_license_checker"
             android:title="@string/check_elm_key" />
+        <item
+            android:id="@+id/nav_show_sim_info"
+            android:title="@string/sim_information" />
+        <item
+            android:id="@+id/nav_secret_codes"
+            android:title="@string/secret_codes" />
+        <item
+            android:id="@+id/nav_get_prop"
+            android:title="@string/get_device_properties" />
     </group>
 </menu>

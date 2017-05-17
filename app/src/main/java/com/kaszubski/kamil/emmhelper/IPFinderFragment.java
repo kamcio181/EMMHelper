@@ -20,6 +20,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.kaszubski.kamil.emmhelper.utils.Constants;
+import com.kaszubski.kamil.emmhelper.utils.ExportableContent;
 import com.kaszubski.kamil.emmhelper.utils.Utils;
 
 import java.net.InetAddress;
@@ -27,8 +28,8 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class IPFinderFragment extends Fragment implements View.OnClickListener{
-    private static final String TAG = "IPFinderFragment";
+public class IPFinderFragment extends Fragment implements View.OnClickListener, ExportableContent{
+    private static final String TAG = IPFinderFragment.class.getSimpleName();
     private TextInputEditText editText;
     private TextView textView, textView2;
     private Button button;
@@ -94,7 +95,7 @@ public class IPFinderFragment extends Fragment implements View.OnClickListener{
             }
             listAsync = new ListSync().execute(editText.getText().toString().trim());
         } else {
-            Utils.showToast(context, context.getString(R.string.host_name_is_empty));
+            Utils.displayToast(context, context.getString(R.string.host_name_is_empty));
         }
     }
 
@@ -115,7 +116,7 @@ public class IPFinderFragment extends Fragment implements View.OnClickListener{
             } else {
                 textView.setText("");
                 textView2.setVisibility(View.INVISIBLE);
-                Utils.showToast(getContext(), context.getString(R.string.error_occurred_check_host_name_and_internet_connection));
+                Utils.displayToast(getContext(), context.getString(R.string.error_occurred_check_host_name_and_internet_connection));
             }
         }
 

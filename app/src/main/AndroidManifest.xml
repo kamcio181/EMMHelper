@@ -4,6 +4,7 @@
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
     <application
         android:allowBackup="true"
@@ -35,7 +36,7 @@
             android:label="@string/manifest_viewer_activity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".XmlViewerActivity"
+            android:name=".XmlViewerActivity2"
             android:label="@string/xml_manifest_viewer"
             android:screenOrientation="portrait" />
         <receiver android:name=".LicenseReceiver">

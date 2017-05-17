@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.FileObserver;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
@@ -50,7 +51,7 @@ import java.util.Collections;
  * create an instance of this fragment.
  */
 public class ExportFragment extends Fragment {
-    private static final String TAG = "ExportFragment";
+    private static final String TAG = ExportFragment.class.getSimpleName();
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_FILE_EXTENSION = "extension";
     private static final String ARG_ARRAY_TO_SAVE = "array";
@@ -62,6 +63,8 @@ public class ExportFragment extends Fragment {
     private Context context;
     private RecyclerView recyclerView;
     private String path;
+    private FileObserver fileObserver;
+    private boolean refreshList = false;
 
 
     public ExportFragment() {
@@ -111,7 +114,18 @@ public class ExportFragment extends Fragment {
         if(context instanceof MainActivity)
             ((MainActivity)context).closeDrawer();
         recyclerView = (RecyclerView) view.findViewById(R.id.recycler_view);
+        path = Environment.getExternalStorageDirectory().getAbsolutePath();
         readFiles();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.d(TAG,"onResume");
+        if (refreshList){
+            readFiles();
+            Utils.displayToast(context, "Files changed. Refreshing list");
+        }
     }
 
     public void permissionGranted(){
@@ -123,30 +137,15 @@ public class ExportFragment extends Fragment {
     public void moveUp(){
         path = path.substring(0, path.length()-1);
         path = path.substring(0, path.lastIndexOf("/"));
-        new GetFiles().execute();
+        readFiles();
     }
 
     public void writeToFile(){
         if(new File(path).canWrite())
-            setFileName().show();
-        else
-            Utils.showToast(context, context.getString(R.string.you_are_not_allowed_to_write_in_this_folder));
-    }
-
-    private Dialog setFileName(){
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        LayoutInflater inflater = getLayoutInflater(null);
-        View layout = inflater.inflate(R.layout.dialog_edit_text, null);
-        final EditText titleEditText = (EditText) layout.findViewById(R.id.titleEditText);
-        titleEditText.setText(R.string.untitled);
-        titleEditText.setSelection(0, titleEditText.length());
-
-        return builder.setTitle(context.getString(R.string.set_file_name)).setView(layout)
-                .setPositiveButton(context.getString(R.string.confirm), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog1, int which) {
-                        String name1 = titleEditText.getText().toString().length() == 0 ? getString(R.string.untitled)
-                                : titleEditText.getText().toString();
+            Utils.getEdiTextDialog(context, "Set file name", getString(R.string.untitled), "File name", new Utils.OnTextSet() {
+                @Override
+                public void onTextSet(String text) {
+                    String name1 = text.length() == 0 ? getString(R.string.untitled) : text;
                         int i = 0;
                         String suffix = "";
                         while (new File(path, name1 + suffix + fileExtension).exists()) {
@@ -154,25 +153,54 @@ public class ExportFragment extends Fragment {
                             suffix = Integer.toString(i);
                         }
                         saveToFile(name1 + suffix + fileExtension);
-                    }
-                })
-                .setNegativeButton(context.getString(R.string.cancel), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog1, int which) {
-                        Utils.showToast(context, context.getString(R.string.cancelled));
-                    }
-                }).create();
+                }
+            }, null, true).show();
+        else
+            Utils.displayToast(context, context.getString(R.string.you_are_not_allowed_to_write_in_this_folder));
     }
+
+//    private Dialog setFileName(){
+//        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+//        LayoutInflater inflater = getLayoutInflater(null);
+//        View layout = inflater.inflate(R.layout.dialog_edit_text, null);
+//        final EditText titleEditText = (EditText) layout.findViewById(R.id.titleEditText);
+//        titleEditText.setText(R.string.untitled);
+//        titleEditText.setSelection(0, titleEditText.length());
+//
+//        return builder.setTitle(context.getString(R.string.set_file_name)).setView(layout)
+//                .setPositiveButton(context.getString(R.string.confirm), new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialog1, int which) {
+//                        String name1 = titleEditText.getText().toString().length() == 0 ? getString(R.string.untitled)
+//                                : titleEditText.getText().toString();
+//                        int i = 0;
+//                        String suffix = "";
+//                        while (new File(path, name1 + suffix + fileExtension).exists()) {
+//                            i++;
+//                            suffix = Integer.toString(i);
+//                        }
+//                        saveToFile(name1 + suffix + fileExtension);
+//                    }
+//                })
+//                .setNegativeButton(context.getString(R.string.cancel), new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialog1, int which) {
+//                        Utils.displayToast(context, context.getString(R.string.canceled));
+//                    }
+//                }).create();
+//    }
 
     private void readFiles(){
         if(ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 == PackageManager.PERMISSION_GRANTED){
-            path = Environment.getExternalStorageDirectory().getAbsolutePath();
+            if(fileObserver != null){
+                fileObserver.stopWatching();
+            }
             new GetFiles().execute();
         }
         else {
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    Constants.WRITE_PERMISSION);
+                    Constants.WRITE_EXTERNAL_STORAGE_PERMISSION);
         }
     }
 
@@ -191,7 +219,7 @@ public class ExportFragment extends Fragment {
         else {
             this.name = name;
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    Constants.WRITE_PERMISSION);
+                    Constants.WRITE_EXTERNAL_STORAGE_PERMISSION);
         }
     }
 
@@ -202,7 +230,8 @@ public class ExportFragment extends Fragment {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            path = path+"/";
+            if(!path.endsWith("/"))
+                path = path+"/";
             ((AppCompatActivity)context).setTitle(path);
         }
 
@@ -242,20 +271,20 @@ public class ExportFragment extends Fragment {
                         public void onItemClick(boolean longClick, boolean isDir, String item) {
                             if(longClick){
                                 Utils.copyToClipboard(context, path + item);
-                                Utils.showToast(context, getString(R.string.path_copied_to_clipboard));
+                                Utils.displayToast(context, getString(R.string.path_copied_to_clipboard));
                                 return;
                             }
                             if (isDir) {
                                 if (new File(path + item).canRead()) {
                                     path = path + item;
-                                    new GetFiles().execute();
+                                    readFiles();
                                 } else
-                                    Utils.showToast(context, context.getString(R.string.you_are_not_allowed_to_view_this_folder));
+                                    Utils.displayToast(context, context.getString(R.string.you_are_not_allowed_to_view_this_folder));
                             } else {
                                 if(fileExtension == null){ //file browser
                                     File file = new File(path + item);
                                     if(!item.contains(".")) {
-                                        Utils.showToast(context, getString(R.string.unknown_extension));
+                                        Utils.displayToast(context, getString(R.string.unknown_extension));
                                         return;
                                     }
                                     String mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(item.substring(item.lastIndexOf(".")+1));
@@ -266,7 +295,7 @@ public class ExportFragment extends Fragment {
                                     try {
                                         startActivity(intent);
                                     } catch (ActivityNotFoundException e){
-                                        Utils.showToast(context, context.getString(R.string.unable_to_find_application_to_open_this_type_of_file));
+                                        Utils.displayToast(context, context.getString(R.string.unable_to_find_application_to_open_this_type_of_file));
                                     }
                                 }
                                 else if(fileExtension.equals(Constants.APK_FILE_EXTENSION)){ // view manifest xml
@@ -287,6 +316,18 @@ public class ExportFragment extends Fragment {
                 } else {
                     ((RecyclerViewAdapter)recyclerView.getAdapter()).changeData(dirs, dirsCount);
                 }
+                fileObserver = new FileObserver(path+"/") {
+                    @Override
+                    public void onEvent(int i, String s) {
+                        if(isResumed()){
+                            readFiles();
+                            Utils.displayToast(context, "Files changed. Refreshing list");
+                        } else {
+                            refreshList = true;
+                        }
+                    }
+                };
+                fileObserver.startWatching();
             }
         }
     }
@@ -346,11 +387,11 @@ public class ExportFragment extends Fragment {
             super.onPostExecute(aBoolean);
 
             if(aBoolean) {
-                Utils.showToast(context, context.getString(R.string.saving_to) + " " + fileExtension.substring(1) + " " + context.getString(R.string.file));
+                Utils.displayToast(context, context.getString(R.string.saving_to) + " " + fileExtension.substring(1) + " " + context.getString(R.string.file));
                 ((AppCompatActivity)context).finish();
             }
             else
-                Utils.showToast(context, context.getString(R.string.failed));
+                Utils.displayToast(context, context.getString(R.string.failed));
         }
     }
 

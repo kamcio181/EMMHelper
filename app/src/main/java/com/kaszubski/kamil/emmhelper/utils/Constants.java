@@ -16,12 +16,15 @@ public interface Constants {
     String FRAGMENT_IP_FIND = "IPFindFragment";
     String FRAGMENT_EXPORT = "ExportFragment";
     String FRAGMENT_LICENSE_CHECK = "LicenseCheckFragment";
+    String FRAGMENT_SIM_INFO = "SimInfoFragment";
+    String FRAGMENT_GETPROP = "GetPropFragment";
 
     String SUCCESS_ACTION = "com.kaszubski.kamil.emmhelper.ACTION_SUCCESS";
     String FAILURE_ACTION = "com.kaszubski.kamil.emmhelper.ACTION_FAILURE";
 
-    int WRITE_PERMISSION = 0;
+    int WRITE_EXTERNAL_STORAGE_PERMISSION = 0;
     int INTERNET_PERMISSION = 1;
+    int READ_PHONE_STATE_PERMISSION = 2;
 
     int DEFAULT_ERROR = -1;
 }

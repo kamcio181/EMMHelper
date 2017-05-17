@@ -1,9 +1,11 @@
 package com.kaszubski.kamil.emmhelper;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -16,6 +18,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,18 +28,23 @@ import android.widget.TextView;
 
 import com.kaszubski.kamil.emmhelper.utils.Constants;
 import com.kaszubski.kamil.emmhelper.utils.DividerItemDecoration;
+import com.kaszubski.kamil.emmhelper.utils.ExportableContent;
 import com.kaszubski.kamil.emmhelper.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
 
 
-public class SearchFragment extends Fragment {
-    private static final String TAG = "SearchFragment";
+public class SearchFragment extends Fragment implements ExportableContent{
+    private static final String TAG = SearchFragment.class.getSimpleName();
     private RecyclerView recyclerView;
     private Context context;
     private PackageInfo packageInfo;
     private ProgressBar progressBar;
+    private IntentFilter intentFilter;
+    private BroadcastReceiver receiver;
+    private boolean refreshList = false;
+    private boolean added;
     public SearchFragment() {
         // Required empty public constructor
     }
@@ -62,6 +70,38 @@ public class SearchFragment extends Fragment {
         recyclerView = (RecyclerView) view.findViewById(R.id.recycler_view);
         progressBar = (ProgressBar) view.findViewById(R.id.progressBar);
         ((MainActivity)context).closeDrawer();
+    }
+
+
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        Log.d(TAG, "onAttach");
+        intentFilter = new IntentFilter();
+        intentFilter.addAction(Intent.ACTION_PACKAGE_ADDED);
+        intentFilter.addAction(Intent.ACTION_PACKAGE_INSTALL);
+        intentFilter.addAction(Intent.ACTION_PACKAGE_REMOVED);
+        intentFilter.addDataScheme("package");
+
+        receiver = new PackageStatusReceiver();
+        context.registerReceiver(receiver, intentFilter);
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        Log.d(TAG, "onDetach");
+        context.unregisterReceiver(receiver);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if(refreshList) {
+            refreshList = false;
+            packageStateChanged(added);
+        }
     }
 
     public void setSearchResults(List<PackageInfo> results){
@@ -102,7 +142,7 @@ public class SearchFragment extends Fragment {
                                                     else {
                                                         SearchFragment.this.packageInfo = packageInfo;
                                                         ActivityCompat.requestPermissions((AppCompatActivity)context, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                                                                Constants.WRITE_PERMISSION);
+                                                                Constants.WRITE_EXTERNAL_STORAGE_PERMISSION);
                                                     }
                                                     break;
                                             }
@@ -122,6 +162,10 @@ public class SearchFragment extends Fragment {
         ((SearchRecyclerAdapter) recyclerView.getAdapter()).clearExport();
     }
 
+    public void selectAllVisible(){
+        ((SearchRecyclerAdapter) recyclerView.getAdapter()).selectAllVisible();
+    }
+
     public PackageInfo getPackageInfo() {
         return packageInfo;
     }
@@ -134,7 +178,7 @@ public class SearchFragment extends Fragment {
         return progressBar;
     }
 
-    class SearchRecyclerAdapter extends RecyclerView.Adapter<SearchRecyclerAdapter.DoubleLineAvatarViewHolder> {
+    private class SearchRecyclerAdapter extends RecyclerView.Adapter<SearchRecyclerAdapter.DoubleLineAvatarViewHolder> {
         private OnItemClickListener listener;
         private List<PackageInfo> packages;
         private Context context;
@@ -189,11 +233,11 @@ public class SearchFragment extends Fragment {
                         if(export.contains(packageName)){
                             export.remove(packageName);
                             itemView.setBackgroundColor(Color.WHITE);
-                            Utils.showToast(context, context.getString(R.string.package_name_removed_from_export_list));
+                            Utils.displayToast(context, context.getString(R.string.package_name_removed_from_export_list));
                         } else {
                             export.add(packageName);
                             itemView.setBackgroundColor(Color.LTGRAY);
-                            Utils.showToast(context, context.getString(R.string.package_name_added_to_export_list));
+                            Utils.displayToast(context, context.getString(R.string.package_name_added_to_export_list));
                         }
                     }
                 });
@@ -224,6 +268,35 @@ public class SearchFragment extends Fragment {
         void clearExport() {
             this.export = new ArrayList<>();
             notifyDataSetChanged();
+        }
+
+        void selectAllVisible() {
+            this.export = new ArrayList<>(packages.size());
+            for(PackageInfo packageInfo : packages)
+                export.add(packageInfo.packageName);
+            notifyDataSetChanged();
+        }
+    }
+
+    private void packageStateChanged(boolean added){
+        ((MainActivity)context).reloadPackages();
+        Utils.displayToast(context, added? getString(R.string.application_installed_refreshing_list) : getString(R.string.application_uninstalled_refreshing_list));
+    }
+
+    private class PackageStatusReceiver extends BroadcastReceiver{
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "visible " + isResumed());
+            if(intent == null)
+                return;
+            String action = intent.getAction();
+            if(isResumed()){
+                packageStateChanged(!action.equals(Intent.ACTION_PACKAGE_REMOVED));
+            } else {
+                refreshList = true;
+                added = !action.equals(Intent.ACTION_PACKAGE_REMOVED);
+            }
         }
     }
 }

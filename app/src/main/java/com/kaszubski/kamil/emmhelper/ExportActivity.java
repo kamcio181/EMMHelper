@@ -25,7 +25,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 public class ExportActivity extends AppCompatActivity implements View.OnClickListener{
-    private static final String TAG = "ExportActivity";
+    private static final String TAG = ExportActivity.class.getSimpleName();
     private Context context;
     private boolean exit = false;
     private Handler handler = new Handler();
@@ -58,7 +58,6 @@ public class ExportActivity extends AppCompatActivity implements View.OnClickLis
                 setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN).commit();
 
         setupToolbarAndFab();
-
     }
 
     private void setupToolbarAndFab(){
@@ -96,7 +95,7 @@ public class ExportActivity extends AppCompatActivity implements View.OnClickLis
             if(!exit){
                 exit = true;
                 handler.postDelayed(exitRunnable, 5000);
-                Utils.showToast(this, getString(R.string.press_back_button_again_to_exit));
+                Utils.displayToast(this, getString(R.string.press_back_button_again_to_exit));
             } else {
                 finish();
             }
@@ -117,7 +116,7 @@ public class ExportActivity extends AppCompatActivity implements View.OnClickLis
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode) {
-            case Constants.WRITE_PERMISSION: {
+            case Constants.WRITE_EXTERNAL_STORAGE_PERMISSION: {
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     Fragment fragment;
@@ -125,7 +124,7 @@ public class ExportActivity extends AppCompatActivity implements View.OnClickLis
                         ((ExportFragment) fragment).permissionGranted();
                     }
                 } else {
-                    Utils.showToast(context, getString(R.string.write_permission_is_required_to_perform_this_action));
+                    Utils.displayToast(context, getString(R.string.write_permission_is_required_to_perform_this_action));
                     finish();
                 }
                 break;

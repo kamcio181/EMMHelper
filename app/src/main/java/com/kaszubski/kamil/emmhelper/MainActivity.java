@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
@@ -26,10 +27,12 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowInsets;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.kaszubski.kamil.emmhelper.utils.Constants;
+import com.kaszubski.kamil.emmhelper.utils.ExportableContent;
 import com.kaszubski.kamil.emmhelper.utils.Utils;
 
 import java.io.BufferedReader;
@@ -44,7 +47,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
         SearchView.OnQueryTextListener{
-    private static final String TAG = "MainActivity";
+    private static final String TAG = MainActivity.class.getSimpleName();
     private List<PackageInfo> list;
     private List<PackageInfo> searchResults;
     private PackageManager packageManager;
@@ -88,6 +91,14 @@ public class MainActivity extends AppCompatActivity
         if (navigationView != null) {
             navigationView.setNavigationItemSelectedListener(this);
             navigationView.setCheckedItem(R.id.nav_app_list);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
+                navigationView.setOnApplyWindowInsetsListener(new View.OnApplyWindowInsetsListener() {
+                    @Override
+                    public WindowInsets onApplyWindowInsets(View v, WindowInsets insets) {
+                        return insets;
+                    }
+                });
+            }
         }
     }
 
@@ -129,7 +140,16 @@ public class MainActivity extends AppCompatActivity
                     progressDialog.setCancelable(false);
                     progressDialog.show();
 
-                    new LoadPackages().execute();
+                    new LoadPackages(new OnLoadListener() {
+                        @Override
+                        public void onLoaded(List<PackageInfo> packageInfos) {
+                            Fragment fragment;
+                            if((fragment = fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH)) != null)
+                                ((SearchFragment)fragment).setSearchResults(packageInfos);
+                            searchView.setOnQueryTextListener(MainActivity.this);
+                            progressDialog.dismiss();
+                        }
+                    }).execute();
 
                     break;
                 case Constants.FRAGMENT_IP_FIND:
@@ -144,9 +164,25 @@ public class MainActivity extends AppCompatActivity
                     longTextTitleMode(false);
                     setTitle(getString(R.string.check_elm_key));
                     break;
+                case Constants.FRAGMENT_SIM_INFO:
+                    longTextTitleMode(false);
+                    setTitle(getString(R.string.sim_information));
+                    getMenuInflater().inflate(R.menu.fragment_sim_info, menu);
+                    break;
             }
         }
         return true;
+    }
+
+    public void reloadPackages(){
+        new LoadPackages(new OnLoadListener() {
+            @Override
+            public void onLoaded(List<PackageInfo> packageInfos) {
+                String query = previousQuery;
+                previousQuery = null;
+                onQueryTextChange(query);
+            }
+        }).execute();
     }
 
     private void longTextTitleMode(boolean enabled){
@@ -174,51 +210,40 @@ public class MainActivity extends AppCompatActivity
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
+        Fragment fragment;
         switch (id){
+            case R.id.action_select_all_visible:
+                ((SearchFragment)fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH)).selectAllVisible();
+                break;
             case R.id.action_share_list:
-                if(fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH) != null) {
-                    ArrayList<String> export = ((SearchFragment) fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH)).getExportList();
+                if((fragment = fragmentManager.findFragmentById(R.id.container)) != null && fragment instanceof ExportableContent) {
+                    ArrayList<String> export = ((ExportableContent)fragment).getExportList();
                     if(export != null && export.size()>0){
                         StringBuilder builder = new StringBuilder();
                         for(String s : export)
                             builder.append(s).append("\n");
                         Utils.shareViaList(this, builder.toString().trim());
                     } else {
-                        Utils.showToast(this, getString(R.string.export_list_is_empty));
+                        Utils.displayToast(this, getString(R.string.nothing_to_share));
                     }
                 }
                 break;
             case R.id.action_export_to_csv:
-                ArrayList<String> export;
-                if(fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH) != null)
-                    export = ((SearchFragment)fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH)).getExportList();
-                else
-                    export = ((IPFinderFragment)fragmentManager.findFragmentByTag(Constants.FRAGMENT_IP_FIND)).getExportList();
-                if(export != null && export.size()>0){
-                    Intent intent = new Intent(this, ExportActivity.class);
-                    intent.putExtra(Constants.ARRAY_KEY, export);
-                    intent.putExtra(Constants.FILE_FORMAT_KEY, Constants.CSV_FILE_EXTENSION);
-                    startActivity(intent);
-                } else {
-                    Utils.showToast(this, getString(R.string.export_list_is_empty));
-                }
-                break;
-            case R.id.action_clear_export_list:
-                ((SearchFragment)fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH)).clearExportList();
-                break;
-            case R.id.action_share:
-                if(fragmentManager.findFragmentByTag(Constants.FRAGMENT_IP_FIND) != null){
-                    ArrayList<String> list = ((IPFinderFragment)fragmentManager.findFragmentByTag(Constants.FRAGMENT_IP_FIND)).getExportList();
-                    if(list != null && list.size()>0){
-                        StringBuilder builder = new StringBuilder();
-                        for(String s : list)
-                            builder.append(s).append("\n");
-                        Utils.shareViaList(this, builder.toString().trim());
+                if((fragment = fragmentManager.findFragmentById(R.id.container)) != null && fragment instanceof ExportableContent) {
+                    ArrayList<String> export = ((ExportableContent) fragment).getExportList();
+
+                    if (export != null && export.size() > 0) {
+                        Intent intent = new Intent(this, ExportActivity.class);
+                        intent.putExtra(Constants.ARRAY_KEY, export);
+                        intent.putExtra(Constants.FILE_FORMAT_KEY, Constants.CSV_FILE_EXTENSION);
+                        startActivity(intent);
                     } else {
-                        Utils.showToast(this, "IP list is empty");
+                        Utils.displayToast(this, getString(R.string.nothing_to_export));
                     }
                 }
+                break;
+            case R.id.action_clear_selection:
+                ((SearchFragment)fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH)).clearExportList();
                 break;
         }
 
@@ -230,32 +255,42 @@ public class MainActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
+        Fragment fragment = null;
+        String tag = null;
         switch (id) {
             case R.id.nav_app_list:
-                fragmentManager.beginTransaction().
-                        replace(R.id.container, new SearchFragment(), Constants.FRAGMENT_SEARCH).
-                        setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN).commit();
+                fragment = new SearchFragment();
+                tag = Constants.FRAGMENT_SEARCH;
                 break;
             case R.id.nav_manifest_viewer:
-                Utils.showToast(this, getString(R.string.find_apk_file_to_view_its_manifest));
-                fragmentManager.beginTransaction().
-                        replace(R.id.container, ExportFragment.newInstance(Constants.APK_FILE_EXTENSION), Constants.FRAGMENT_EXPORT).
-                        setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN).commit();
+                Utils.displayToast(this, getString(R.string.find_apk_file_to_view_its_manifest));
+                fragment = ExportFragment.newInstance(Constants.APK_FILE_EXTENSION);
+                tag = Constants.FRAGMENT_EXPORT;
                 break;
             case R.id.nav_root_explorer:
-                fragmentManager.beginTransaction().
-                        replace(R.id.container, new ExportFragment(), Constants.FRAGMENT_EXPORT).
-                        setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN).commit();
+                fragment = new ExportFragment();
+                tag = Constants.FRAGMENT_EXPORT;
                 break;
             case R.id.nav_ip_for_hostname:
-                fragmentManager.beginTransaction().
-                        replace(R.id.container, new IPFinderFragment(), Constants.FRAGMENT_IP_FIND).
-                        setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN).commit();
+                fragment = new IPFinderFragment();
+                tag = Constants.FRAGMENT_IP_FIND;
                 break;
             case R.id.nav_license_checker:
-                fragmentManager.beginTransaction().replace(R.id.container, new LicenseCheckFragment(), Constants.FRAGMENT_LICENSE_CHECK).
-                        setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN).commit();
+                fragment = new LicenseCheckFragment();
+                tag = Constants.FRAGMENT_LICENSE_CHECK;
+                break;
+            case R.id.nav_show_sim_info:
+                fragment = new SimInfoFragment();
+                tag = Constants.FRAGMENT_SIM_INFO;
+                break;
+            case R.id.nav_get_prop:
+                fragment = new GetPropFragment();
+                tag = Constants.FRAGMENT_GETPROP;
+                break;
         }
+        if(fragment != null)
+            fragmentManager.beginTransaction().replace(R.id.container, fragment, tag).
+                    setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN).commit();
         return true;
     }
 
@@ -275,11 +310,12 @@ public class MainActivity extends AppCompatActivity
     public boolean onQueryTextChange(final String newText) {
         Log.v(TAG, "query \"" + newText +"\"");
         Fragment fragment = fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH);
-        if(newText.trim().length()>0) {
+        if(newText != null && newText.trim().length()>0) {
+            final String trimmedText = newText.trim();
             if(progressBar == null && fragment!= null)
                 progressBar = ((SearchFragment)fragment).getProgressBar();
 
-            if(previousQuery!= null && newText.contains(previousQuery)){
+            if(previousQuery!= null && trimmedText.contains(previousQuery)){
                 Log.i(TAG, "similar query true");
                 final Handler handler = new Handler();
                 handler.post(new Runnable() {
@@ -287,7 +323,7 @@ public class MainActivity extends AppCompatActivity
                     public void run() {
                         if(searchPackages.getStatus() == AsyncTask.Status.FINISHED){
                             searchPackages = new SearchPackages(true);
-                            searchPackages.execute(newText);
+                            searchPackages.execute(trimmedText);
                         } else {
                             handler.postDelayed(this, 200);
                         }
@@ -303,9 +339,9 @@ public class MainActivity extends AppCompatActivity
                 }
 
                 searchPackages = new SearchPackages();
-                searchPackages.execute(newText);
+                searchPackages.execute(trimmedText);
             }
-            previousQuery = newText;
+            previousQuery = trimmedText;
             progressBar.setVisibility(View.VISIBLE);
 
         } else if(fragment!= null)
@@ -313,7 +349,7 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    class PackagesComparator implements Comparator<PackageInfo> {
+    private class PackagesComparator implements Comparator<PackageInfo> {
 
         @Override
         public int compare(PackageInfo lhs, PackageInfo rhs) {
@@ -325,7 +361,7 @@ public class MainActivity extends AppCompatActivity
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         Log.e(TAG, "code "+requestCode);
         switch (requestCode) {
-            case Constants.WRITE_PERMISSION:
+            case Constants.WRITE_EXTERNAL_STORAGE_PERMISSION:
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     Fragment fragment;
@@ -335,24 +371,42 @@ public class MainActivity extends AppCompatActivity
                         ((ExportFragment)fragment).permissionGranted();
                     }
                 } else {
-                    Utils.showToast(this, getString(R.string.write_permission_is_required_to_perform_this_action));
+                    Utils.displayToast(this, getString(R.string.write_permission_is_required_to_perform_this_action));
                 }
                 break;
-            case Constants.INTERNET_PERMISSION: {
+            case Constants.INTERNET_PERMISSION:
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     Fragment fragment = fragmentManager.findFragmentByTag(Constants.FRAGMENT_IP_FIND);
                     if(fragment != null)
                         ((IPFinderFragment)fragment).searchIPs();
                 } else {
-                    Utils.showToast(this, getString(R.string.internet_permission_is_required_to_perform_this_action));
+                    Utils.displayToast(this, getString(R.string.internet_permission_is_required_to_perform_this_action));
                 }
                 break;
-            }
+            case Constants.READ_PHONE_STATE_PERMISSION:
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Fragment fragment = fragmentManager.findFragmentByTag(Constants.FRAGMENT_SIM_INFO);
+                    if(fragment != null)
+                        ((SimInfoFragment)fragment).permissionGranted();
+                } else {
+                    Utils.displayToast(this, getString(R.string.internet_permission_is_required_to_perform_this_action));
+                }
+                break;
         }
     }
 
-    class LoadPackages extends AsyncTask<Void, Void, List<PackageInfo>>{
+    interface OnLoadListener{
+        void onLoaded(List<PackageInfo> packageInfos);
+    }
+
+    private class LoadPackages extends AsyncTask<Void, Void, List<PackageInfo>>{
+        private OnLoadListener listener;
+
+        LoadPackages(OnLoadListener listener) {
+            this.listener = listener;
+        }
 
         @Override
         protected List<PackageInfo> doInBackground(Void... params) {
@@ -395,15 +449,13 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected void onPostExecute(List<PackageInfo> packageInfos) {
             super.onPostExecute(packageInfos);
-            Fragment fragment;
-            if((fragment = fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH)) != null)
-                ((SearchFragment)fragment).setSearchResults(packageInfos);
-            searchView.setOnQueryTextListener(MainActivity.this);
-            progressDialog.dismiss();
+            if(listener != null){
+                listener.onLoaded(packageInfos);
+            }
         }
     }
 
-    class SearchPackages extends AsyncTask<String, Void, List<PackageInfo>>{
+    private class SearchPackages extends AsyncTask<String, Void, List<PackageInfo>>{
         private boolean searchInCurrentResults;
 
         SearchPackages(boolean searchInCurrentResults){

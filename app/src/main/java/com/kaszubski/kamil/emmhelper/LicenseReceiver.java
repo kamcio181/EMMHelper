@@ -9,7 +9,7 @@ import android.util.Log;
 import com.kaszubski.kamil.emmhelper.utils.Constants;
 
 public class LicenseReceiver extends BroadcastReceiver {
-	private static final String TAG = "LicenseReceiver";
+	private static final String TAG = LicenseReceiver.class.getSimpleName();
 	public LicenseReceiver(){
 
 	}

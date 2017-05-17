@@ -22,7 +22,7 @@ import com.kaszubski.kamil.emmhelper.utils.Constants;
 import com.kaszubski.kamil.emmhelper.utils.Utils;
 
 public class LicenseCheckFragment extends Fragment implements View.OnClickListener{
-    private static final String TAG = "LicenseCheckFragment";
+    private static final String TAG = LicenseCheckFragment.class.getSimpleName();
     private TextInputEditText editText;
     private Button button, button2;
     private Context context;
@@ -73,7 +73,7 @@ public class LicenseCheckFragment extends Fragment implements View.OnClickListen
     }
 
     private void activateLicense(String licenseKey){
-        Utils.showToast(context, getString(R.string.checking_license));
+        Utils.displayToast(context, getString(R.string.checking_license));
         EnterpriseLicenseManager elm = EnterpriseLicenseManager.getInstance(context);
         elm.activateLicense(licenseKey, context.getPackageName());
     }

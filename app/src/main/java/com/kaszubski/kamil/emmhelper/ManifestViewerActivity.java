@@ -1,5 +1,6 @@
 package com.kaszubski.kamil.emmhelper;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
@@ -8,6 +9,7 @@ import android.content.pm.PermissionInfo;
 import android.content.pm.ProviderInfo;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -26,13 +28,17 @@ import com.kaszubski.kamil.emmhelper.utils.Constants;
 import com.kaszubski.kamil.emmhelper.utils.Utils;
 import com.kaszubski.kamil.emmhelper.utils.VerticalSpaceItemDecoration;
 
+import net.dongliu.apk.parser.ApkFile;
+
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
 public class ManifestViewerActivity extends AppCompatActivity {
-    private static final String TAG = "ManifestViewerActivity";
+    private static final String TAG = ManifestViewerActivity.class.getSimpleName();
     private PackageInfo packageInfo;
     private TextView appNameTV, packageNameTV, versionCodeTV, versionNameTV, launcherCapabilitiesTV, installationTimeTV, lastUpdateTimeTV;
     private ImageView iconIV;
@@ -59,6 +65,10 @@ public class ManifestViewerActivity extends AppCompatActivity {
                     packageInfo = getPackageManager().getPackageInfo(packageName, PackageManager.GET_ACTIVITIES
                             | PackageManager.GET_RECEIVERS | PackageManager.GET_PERMISSIONS
                             | PackageManager.GET_SERVICES | PackageManager.GET_PROVIDERS);
+                    if(packageInfo == null){
+                        Utils.displayToast(this, "Package corrupted");
+                        finish();
+                    }
                 } catch (RuntimeException e){
                     Log.e(TAG, "Runtime Exception");
                     packageInfo = getPackageManager().getPackageInfo(packageName, PackageManager.GET_ACTIVITIES);
@@ -96,6 +106,10 @@ public class ManifestViewerActivity extends AppCompatActivity {
             packageInfo = getPackageManager().getPackageArchiveInfo(sourceFile,
                     PackageManager.GET_ACTIVITIES | PackageManager.GET_RECEIVERS | PackageManager.GET_PERMISSIONS
                             | PackageManager.GET_SERVICES | PackageManager.GET_PROVIDERS);
+            if(packageInfo == null){
+                Utils.displayToast(this, "Package corrupted");
+                finish();
+            }
             launcherCapabilitiesTV.setText(Html.fromHtml("<b>" + getString(R.string.launcher_kiosk_ready)
                     + ": </b>" + getString(R.string.loading)));
             appNameTV.setText(packageInfo.packageName); //not supported using default value
@@ -129,7 +143,7 @@ public class ManifestViewerActivity extends AppCompatActivity {
         recyclerView.setAdapter(new ExpansionItemsAdapter(packageInfo));
     }
 
-    private void isLauncherReady(){
+    private void isLauncherReady(){ //TODO check
         if(isPackageInstalled) {
             boolean isLauncherReady = false;
             ActivityInfo[] info = packageInfo.activities;
@@ -152,12 +166,13 @@ public class ManifestViewerActivity extends AppCompatActivity {
             }
             setLauncherCapabilitiesTV(isLauncherReady);
         } else {
-            Utils.decodeXmlFile(this, sourceFile, true, new Utils.OnDecodeFinishListener() {
-                @Override
-                public void onDecodeFinished(String xml, boolean launcherReady) {
-                    setLauncherCapabilitiesTV(launcherReady);
-                }
-            });
+//            Utils.decodeXmlFile(this, sourceFile, true, new Utils.OnDecodeFinishListener() {
+//                @Override
+//                public void onDecodeFinished(String xml, boolean launcherReady) {
+//                    setLauncherCapabilitiesTV(launcherReady);
+//                }
+//            });
+            new CheckLauncherCapabilities().execute();
         }
     }
 
@@ -182,7 +197,7 @@ public class ManifestViewerActivity extends AppCompatActivity {
 
         switch (id){
             case R.id.action_view_as_xml:
-                Intent intent = new Intent(this, XmlViewerActivity.class);
+                Intent intent = new Intent(this, XmlViewerActivity2.class);
                 intent.putExtra(Constants.SOURCE_DIR, sourceFile);
                 startActivity(intent);
                 break;
@@ -339,6 +354,44 @@ public class ManifestViewerActivity extends AppCompatActivity {
                     }
                 });
             }
+        }
+    }
+
+    private class CheckLauncherCapabilities extends AsyncTask<Void, Void, Boolean> {
+
+        @Override
+        protected void onPostExecute(Boolean b) {
+            super.onPostExecute(b);
+            setLauncherCapabilitiesTV(b);
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... voids) {
+            try {
+                ApkFile apkFile = new ApkFile(new File(sourceFile));
+                String manifestXml = apkFile.getManifestXml();
+                if(manifestXml != null) {
+
+                    int previousIndex = 0;
+                    while (true){
+                        int startIndex = manifestXml.indexOf("<category android:name=\"android.intent.category.HOME\"", previousIndex);
+                        if(startIndex == -1)
+                            return false;
+
+                        String suspectedComponent = manifestXml.substring(startIndex-70 > 0? startIndex-70 : 0, startIndex + 140 < manifestXml.length()? startIndex + 140 : manifestXml.length());
+                        if (suspectedComponent.contains("category android:name=\"android.intent.category.DEFAULT\""))
+                            return true;
+
+                        if(previousIndex == startIndex)
+                            return false;
+
+                        previousIndex = startIndex;
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
         }
     }
 }

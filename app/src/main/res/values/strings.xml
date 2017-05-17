@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">EMMHelper</string>
+    <string name="app_name">EMM Helper</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
@@ -32,7 +32,7 @@
     <string name="untitled">Untitled</string>
     <string name="set_file_name">Set file name</string>
     <string name="cancel">Cancel</string>
-    <string name="cancelled">Cancelled</string>
+    <string name="canceled">Canceled</string>
     <string name="confirm">Confirm</string>
     <string name="you_are_not_allowed_to_view_this_folder">You are not allowed to view this folder</string>
     <string name="unable_to_find_application_to_open_this_type_of_file">Unable to find application to open this type of file</string>
@@ -44,7 +44,6 @@
     <string name="error_occurred_check_host_name_and_internet_connection">Error occurred. Check host name and internet connection</string>
     <string name="query_hint">Package name…</string>
     <string name="loading_packages">Loading packages…</string>
-    <string name="export_list_is_empty">Export list is empty</string>
     <string name="find_apk_file_to_view_its_manifest">Find APK file to view it\'s manifest</string>
     <string name="internet_permission_is_required_to_perform_this_action">Internet permission is required to perform this action</string>
     <string name="version_code">Version code</string>
@@ -66,7 +65,6 @@
     <string name="share_list">Share list</string>
     <string name="export_list_to_csv">Export to csv</string>
     <string name="export_to_csv">Export to csv</string>
-    <string name="clear_export_list">Clear export list</string>
     <string name="application_list">Application list</string>
     <string name="view_as_xml">View as xml</string>
     <string name="export_to_txt">Export to txt</string>
@@ -90,6 +88,19 @@
     <string name="unknown_extension">Unknown extension</string>
     <string name="path_copied_to_clipboard">Path copied to clipboard</string>
     <string name="check_elm_key">Check ELM key</string>
+    <string name="application_installed_refreshing_list">Application installed. Refreshing list</string>
+    <string name="application_uninstalled_refreshing_list">Application uninstalled. Refreshing list</string>
+    <string name="select_all_visible">Select all visible</string>
+    <string name="clear_selection">Clear selection</string>
+    <string name="secret_codes">Secret codes</string>
+    <string name="nothing_to_share">There is nothing to share</string>
+    <string name="nothing_to_export">There is nothing to export</string>
+    <string name="export_ips_to_csv">Export IPs to csv</string>
+    <string name="export_sim_info_to_csv">Export SIM info to csv</string>
+    <string name="share_sim_info">Share SIM info</string>
+    <string name="sim_information">SIM information</string>
+    <string name="get_device_properties">Get device properties</string>
+    <string name="share_properties">Share properties</string>
 
     <string-array name="package_menu">
         <item>View information</item>
@@ -97,5 +108,23 @@
         <item>Copy package name</item>
         <item>Share package name</item>
         <item>Extract apk file</item>
+    </string-array>
+
+    <string-array name="sim_states">
+        <item>Unknown</item>
+        <item>Absent</item>
+        <item>PIN required</item>
+        <item>PUK required</item>
+        <item>Network locked</item>
+        <item>Ready</item>
+        <item>Not Ready</item>
+        <item>Permanently disabled</item>
+        <item>IO error</item>
+        <item>Restricted</item>
+    </string-array>
+
+    <string-array name="export">
+        <item>Selection</item>
+        <item>All text</item>
     </string-array>
 </resources>

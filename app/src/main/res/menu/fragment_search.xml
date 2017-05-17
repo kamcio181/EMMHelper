@@ -7,6 +7,14 @@
         android:icon="@drawable/ic_search_white"
         app:showAsAction="collapseActionView|ifRoom"
         app:actionViewClass="android.support.v7.widget.SearchView" />
+    <item android:id="@+id/action_select_all_visible"
+        android:orderInCategory="150"
+        android:title="@string/select_all_visible"
+        app:showAsAction="never" />
+    <item android:id="@+id/action_clear_selection"
+        android:orderInCategory="170"
+        android:title="@string/clear_selection"
+        app:showAsAction="never" />
     <item android:id="@+id/action_export_to_csv"
         android:orderInCategory="200"
         android:title="@string/export_list_to_csv"
@@ -14,9 +22,5 @@
     <item android:id="@+id/action_share_list"
         android:orderInCategory="250"
         android:title="@string/share_list"
-        app:showAsAction="never" />
-    <item android:id="@+id/action_clear_export_list"
-        android:orderInCategory="300"
-        android:title="@string/clear_export_list"
         app:showAsAction="never" />
 </menu>
