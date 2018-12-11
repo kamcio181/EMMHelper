@@ -38,7 +38,7 @@ import java.util.Arrays;
 
 import static android.content.Context.TELEPHONY_SERVICE;
 
-public class SimInfoFragment extends Fragment implements View.OnClickListener, ExportableContent{ //TODO sim state listener
+public class SimInfoFragment extends Fragment implements View.OnClickListener, ExportableContent{
     private static final String TAG = SimInfoFragment.class.getSimpleName();
     private static final String ACTION_SIM_STATE_CHANGED = "android.intent.action.SIM_STATE_CHANGED";
     private LinearLayout linearLayout;
@@ -80,6 +80,7 @@ public class SimInfoFragment extends Fragment implements View.OnClickListener, E
     }
 
     public void permissionGranted(){
+        Log.d(TAG, "GRANTED");
         getSimInformation();
     }
 
@@ -146,16 +147,14 @@ public class SimInfoFragment extends Fragment implements View.OnClickListener, E
                 int mnc = subscriptionInfo.getMnc();
                 String mncString = mnc < 10 ? "0" + mnc : String.valueOf(mnc);
 
-                StringBuilder builder = new StringBuilder();
-                builder.append("<b>").append("Sim state: ").append("</b>").append(getResources().getStringArray(R.array.sim_states)[getSimState(subscriptionInfo.getSimSlotIndex())]).append("<br/>")
-                        .append("<b>").append("Country: ").append("</b>").append(checkNull(subscriptionInfo.getCountryIso())).append("<br/>")
-                        .append("<b>").append("MCC: ").append("</b>").append(checkNull(String.valueOf(subscriptionInfo.getMcc()))).append("<br/>")
-                        .append("<b>").append("MNC: ").append("</b>").append(checkNull(mncString)).append("<br/>")
-                        .append("<b>").append("Operator name: ").append("</b>").append(checkNull(String.valueOf(subscriptionInfo.getCarrierName()))).append("<br/>")
-                        .append("<b>").append("Serial Number: ").append("</b>").append(checkNull(subscriptionInfo.getIccId())).append("<br/>")
-                        .append("<b>").append("Device Id: ").append("</b>").append(getImei(subscriptionInfo.getSimSlotIndex()));
-
-                String currentInfo = builder.toString();
+                String currentInfo = "<b>" + "Sim state: " + "</b>" + getResources().getStringArray(R.array.sim_states)[getSimState(subscriptionInfo.getSimSlotIndex())] + "<br/>" +
+                        "<b>" + "Country: " + "</b>" + checkNull(subscriptionInfo.getCountryIso()) + "<br/>" +
+                        "<b>" + "MCC: " + "</b>" + checkNull(String.valueOf(subscriptionInfo.getMcc())) + "<br/>" +
+                        "<b>" + "MNC: " + "</b>" + checkNull(mncString) + "<br/>" +
+                        "<b>" + "Operator name: " + "</b>" + checkNull(String.valueOf(subscriptionInfo.getCarrierName())) + "<br/>" +
+                        "<b>" + "Serial Number: " + "</b>" + checkNull(subscriptionInfo.getIccId()) + "<br/>" +
+                        "<b>" + "Device Id: " + "</b>" + getImei(subscriptionInfo.getSimSlotIndex()) + "<br/>" +
+                        "<b>" + "Number " + "</b>" + subscriptionInfo.getNumber();
 
                 TextView header = (TextView) view1.findViewById(R.id.header);
                 header.setText("SIM slot " + subscriptionInfo.getSimSlotIndex());

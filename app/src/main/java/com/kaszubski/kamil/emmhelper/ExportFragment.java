@@ -159,7 +159,15 @@ public class ExportFragment extends Fragment {
             Utils.displayToast(context, context.getString(R.string.you_are_not_allowed_to_write_in_this_folder));
     }
 
-//    private Dialog setFileName(){
+    @Override
+    public void onDetach() {
+        super.onDetach();
+
+        if(fileObserver != null)
+            fileObserver.stopWatching();
+    }
+
+    //    private Dialog setFileName(){
 //        AlertDialog.Builder builder = new AlertDialog.Builder(context);
 //        LayoutInflater inflater = getLayoutInflater(null);
 //        View layout = inflater.inflate(R.layout.dialog_edit_text, null);
@@ -352,7 +360,7 @@ public class ExportFragment extends Fragment {
                     e.printStackTrace();
                     return false;
                 }
-            } else { //file in tem dir
+            } else { //file in temp dir
                 InputStream in;
                 OutputStream out;
                 try {

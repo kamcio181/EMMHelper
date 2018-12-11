@@ -60,6 +60,11 @@ public class ExportActivity extends AppCompatActivity implements View.OnClickLis
         setupToolbarAndFab();
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
     private void setupToolbarAndFab(){
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);

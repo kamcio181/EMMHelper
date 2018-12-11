@@ -42,10 +42,12 @@
     <string name="failed">Failed</string>
     <string name="host_name_is_empty">Host name is empty</string>
     <string name="error_occurred_check_host_name_and_internet_connection">Error occurred. Check host name and internet connection</string>
-    <string name="query_hint">Package name…</string>
+    <string name="package_query_hint">Package name…</string>
+    <string name="properties_query_hint">Property…</string>
     <string name="loading_packages">Loading packages…</string>
     <string name="find_apk_file_to_view_its_manifest">Find APK file to view it\'s manifest</string>
     <string name="internet_permission_is_required_to_perform_this_action">Internet permission is required to perform this action</string>
+    <string name="phone_permission_is_required_to_perform_this_action">Phone permission is required to perform this action</string>
     <string name="version_code">Version code</string>
     <string name="version_name">Version name</string>
     <string name="launcher_kiosk_ready">Launcher/Kiosk ready</string>
@@ -101,6 +103,19 @@
     <string name="sim_information">SIM information</string>
     <string name="get_device_properties">Get device properties</string>
     <string name="share_properties">Share properties</string>
+    <string name="enable_auto_run">Enable auto run</string>
+    <string name="accessibility_service_description">Accessibility service run automatically chosen secret code</string>
+    <string name="don_t_show_again">Don\'t show again</string>
+    <string name="enable_accessibility_service">Enable Accessibility Service</string>
+    <string name="enable_accessibility_service_confirmation">Do you want to enable Accessibility Service to run secret codes automatically?</string>
+    <string name="later">Later</string>
+    <string name="you_can_enable_it_from_menu">You can enable it from menu</string>
+    <string name="enable">Enable</string>
+    <string name="warning">Warning</string>
+    <string name="secret_codes_warning_message">Some codes may work only on specific devices.</string>
+    <string name="accessibility_service_already_enabled">Accessibility Service has been already enabled</string>
+    <string name="secret_code_copied_to_clipboard">Secret code copied to clipboard. Paste it in dialer application</string>
+
 
     <string-array name="package_menu">
         <item>View information</item>
@@ -126,5 +141,53 @@
     <string-array name="export">
         <item>Selection</item>
         <item>All text</item>
+    </string-array>
+
+    <string-array name="secretCodesNames">
+        <item>Device IMEI</item>
+        <item>Firmware inf.</item>
+        <item>System Dump Mode</item>
+        <item>General Test Mode</item>
+        <item>Battery Status</item>
+        <item>Service Mode</item>
+        <item>Camera Firmware</item>
+        <item>Firmware version</item>
+        <item>Quick Test Mode</item>
+        <item>Firmware + Hardware inf.</item>
+        <item>Cell inf.</item>
+        <item>USB settings</item>
+        <item>Network Lock</item>
+        <item>FTA SW version</item>
+        <item>FTA HW version</item>
+        <item>Camera Firmware Standard</item>
+        <item>Loopback Test</item>
+        <item>Reset Total Call Time</item>
+        <item>CP Debug level</item>
+        <item>Grip Sensor</item>
+        <item>Cabc Test</item>
+    </string-array>
+
+    <string-array name="secretCodes">
+        <item>*#06#</item>
+        <item>*#1234#</item>
+        <item>*#9900#</item>
+        <item>*#0*#</item>
+        <item>*#0228#</item>
+        <item>*#9090#</item>
+        <item>*#34971539#</item>
+        <item>*#2663#</item>
+        <item>*#7353#</item>
+        <item>*#12580*369#</item>
+        <item>*#0011#</item>
+        <item>*#0808#</item>
+        <item>#7465625*638*#</item>
+        <item>*#1111#</item>
+        <item>*#2222#</item>
+        <item>*#7412365*</item>
+        <item>*#0283#</item>
+        <item>*#22558463#</item>
+        <item>*#66336#</item>
+        <item>*#1106#</item>
+        <item>*#22228378#</item>
     </string-array>
 </resources>

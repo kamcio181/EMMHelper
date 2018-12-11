@@ -60,7 +60,7 @@ public class SearchFragment extends Fragment implements ExportableContent{
         ((AppCompatActivity)context).invalidateOptionsMenu();
 
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_search, container, false);
+        return inflater.inflate(R.layout.fragment_list, container, false);
     }
 
     @Override
@@ -172,10 +172,6 @@ public class SearchFragment extends Fragment implements ExportableContent{
 
     public ArrayList<String> getExportList(){
         return ((SearchRecyclerAdapter)recyclerView.getAdapter()).getExport();
-    }
-
-    public ProgressBar getProgressBar() {
-        return progressBar;
     }
 
     private class SearchRecyclerAdapter extends RecyclerView.Adapter<SearchRecyclerAdapter.DoubleLineAvatarViewHolder> {

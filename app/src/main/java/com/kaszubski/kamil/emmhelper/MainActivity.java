@@ -67,6 +67,7 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
         fragmentManager = getSupportFragmentManager();
         drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if(drawer != null)
@@ -102,6 +103,10 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    public void setProgressBarState(boolean enabled){
+        progressBar.setVisibility(enabled? View.VISIBLE : View.GONE);
+    }
+
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -121,18 +126,19 @@ public class MainActivity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         if(fragmentManager.findFragmentById(R.id.container) != null) {
+            SearchManager searchManager;
             switch (fragmentManager.findFragmentById(R.id.container).getTag()) {
                 case Constants.FRAGMENT_SEARCH:
                     longTextTitleMode(false);
                     setTitle(getString(R.string.application_list));
                     getMenuInflater().inflate(R.menu.fragment_search, menu);
-                    SearchManager searchManager =
+                    searchManager =
                             (SearchManager) getSystemService(Context.SEARCH_SERVICE);
                     searchView =
                             (SearchView) MenuItemCompat.getActionView(menu.findItem(R.id.action_search));
                     searchView.setSearchableInfo(
                             searchManager.getSearchableInfo(getComponentName()));
-                    searchView.setQueryHint(getString(R.string.query_hint));
+                    searchView.setQueryHint(getString(R.string.package_query_hint));
 
                     progressDialog = new ProgressDialog(this, ProgressDialog.STYLE_SPINNER);
                     progressDialog.setMessage(getString(R.string.loading_packages));
@@ -152,6 +158,20 @@ public class MainActivity extends AppCompatActivity
                     }).execute();
 
                     break;
+                case Constants.FRAGMENT_GETPROP:
+                    longTextTitleMode(false);
+                    setTitle(getString(R.string.get_device_properties));
+                    return false;
+//                    getMenuInflater().inflate(R.menu.fragment_getprop, menu);
+//                    searchManager =
+//                            (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+//                    searchView =
+//                            (SearchView) MenuItemCompat.getActionView(menu.findItem(R.id.action_search));
+//                    searchView.setSearchableInfo(
+//                            searchManager.getSearchableInfo(getComponentName()));
+//                    searchView.setQueryHint(getString(R.string.properties_query_hint));
+//                    searchView.setOnQueryTextListener((SearchView.OnQueryTextListener) getFragmentManager().findFragmentByTag(Constants.FRAGMENT_GETPROP));
+//                    break;
                 case Constants.FRAGMENT_IP_FIND:
                     longTextTitleMode(false);
                     setTitle(getString(R.string.hostname_ips));
@@ -210,13 +230,19 @@ public class MainActivity extends AppCompatActivity
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-        Fragment fragment;
+        Fragment fragment = fragmentManager.findFragmentById(R.id.container);
+//        if(fragment instanceof GetPropFragment)
+//            return super.onOptionsItemSelected(item);
+
         switch (id){
             case R.id.action_select_all_visible:
-                ((SearchFragment)fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH)).selectAllVisible();
-                break;
+                ((SearchFragment)fragment).selectAllVisible();
+                return true;
+            case R.id.action_clear_selection:
+                ((SearchFragment)fragment).clearExportList();
+                return true;
             case R.id.action_share_list:
-                if((fragment = fragmentManager.findFragmentById(R.id.container)) != null && fragment instanceof ExportableContent) {
+                if(fragment instanceof ExportableContent) {
                     ArrayList<String> export = ((ExportableContent)fragment).getExportList();
                     if(export != null && export.size()>0){
                         StringBuilder builder = new StringBuilder();
@@ -227,9 +253,9 @@ public class MainActivity extends AppCompatActivity
                         Utils.displayToast(this, getString(R.string.nothing_to_share));
                     }
                 }
-                break;
+                return true;
             case R.id.action_export_to_csv:
-                if((fragment = fragmentManager.findFragmentById(R.id.container)) != null && fragment instanceof ExportableContent) {
+                if(fragment instanceof ExportableContent) {
                     ArrayList<String> export = ((ExportableContent) fragment).getExportList();
 
                     if (export != null && export.size() > 0) {
@@ -241,10 +267,7 @@ public class MainActivity extends AppCompatActivity
                         Utils.displayToast(this, getString(R.string.nothing_to_export));
                     }
                 }
-                break;
-            case R.id.action_clear_selection:
-                ((SearchFragment)fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH)).clearExportList();
-                break;
+                return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -283,6 +306,10 @@ public class MainActivity extends AppCompatActivity
                 fragment = new SimInfoFragment();
                 tag = Constants.FRAGMENT_SIM_INFO;
                 break;
+            case R.id.nav_secret_codes:
+                fragment = new SecretCodesFragment();
+                tag = Constants.FRAGMENT_SECRET_CODES;
+                break;
             case R.id.nav_get_prop:
                 fragment = new GetPropFragment();
                 tag = Constants.FRAGMENT_GETPROP;
@@ -312,8 +339,6 @@ public class MainActivity extends AppCompatActivity
         Fragment fragment = fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH);
         if(newText != null && newText.trim().length()>0) {
             final String trimmedText = newText.trim();
-            if(progressBar == null && fragment!= null)
-                progressBar = ((SearchFragment)fragment).getProgressBar();
 
             if(previousQuery!= null && trimmedText.contains(previousQuery)){
                 Log.i(TAG, "similar query true");
@@ -335,14 +360,14 @@ public class MainActivity extends AppCompatActivity
                 searchResults.clear();
                 if(searchPackages != null && searchPackages.getStatus() != AsyncTask.Status.FINISHED) {
                     searchPackages.cancel(true);
-                    progressBar.setVisibility(View.INVISIBLE);
+                    setProgressBarState(false);
                 }
 
                 searchPackages = new SearchPackages();
                 searchPackages.execute(trimmedText);
             }
             previousQuery = trimmedText;
-            progressBar.setVisibility(View.VISIBLE);
+            setProgressBarState(true);
 
         } else if(fragment!= null)
             ((SearchFragment)fragment).setSearchResults(list);
@@ -391,7 +416,7 @@ public class MainActivity extends AppCompatActivity
                     if(fragment != null)
                         ((SimInfoFragment)fragment).permissionGranted();
                 } else {
-                    Utils.displayToast(this, getString(R.string.internet_permission_is_required_to_perform_this_action));
+                    Utils.displayToast(this, getString(R.string.phone_permission_is_required_to_perform_this_action));
                 }
                 break;
         }
@@ -498,7 +523,7 @@ public class MainActivity extends AppCompatActivity
         protected void onPostExecute(List<PackageInfo> packageInfos) {
             super.onPostExecute(packageInfos);
             searchResults = packageInfos;
-            progressBar.setVisibility(View.INVISIBLE);
+            setProgressBarState(false);
             Collections.sort(searchResults, new PackagesComparator());
             Fragment fragment;
             if((fragment = fragmentManager.findFragmentByTag(Constants.FRAGMENT_SEARCH)) != null)

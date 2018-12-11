@@ -15,6 +15,8 @@ import android.os.Looper;
 import android.provider.Settings;
 import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.widget.AppCompatCheckBox;
+import android.support.v7.widget.AppCompatTextView;
 import android.util.Log;
 import android.util.SparseIntArray;
 import android.view.LayoutInflater;
@@ -91,6 +93,13 @@ public class Utils {
     }
 
     /**
+     Interface to provide CheckBoxChecked Callback
+     */
+    public interface OnConfirmCheckBoxDialog {
+        void onConfirmCheckBoxDialog(boolean isChecked);
+    }
+
+    /**
      * Generate AlertDialog with EditText
      *
      * @param context           context of caller
@@ -138,6 +147,45 @@ public class Utils {
                         public void onClick(View view) {
                             if (confirmAction != null)
                                 confirmAction.onTextSet(editText.getText().toString().trim());
+                        }
+                    });
+                }
+            });
+        }
+
+        return dialog;
+    }
+
+    public static Dialog getMessageWithCheckBoxDialog(final Context context, final String title, String message, String checkBoxText,
+                                                      final OnConfirmCheckBoxDialog confirmAction,  boolean dismissOnConfirm){
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        LayoutInflater inflater = ((Activity)context).getLayoutInflater();
+        View layout = inflater.inflate(R.layout.dialog_message_and_checkbox, null);
+        AppCompatTextView messageTextView = (AppCompatTextView) layout.findViewById(R.id.message);
+        final AppCompatCheckBox checkBox = (AppCompatCheckBox) layout.findViewById(R.id.checkBox);
+        messageTextView.setText(message);
+        checkBox.setText(checkBoxText);
+
+        builder.setTitle(title).setView(layout)
+                .setPositiveButton(R.string.confirm, dismissOnConfirm ? new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                if (confirmAction != null)
+                    confirmAction.onConfirmCheckBoxDialog(checkBox.isChecked());
+            }
+        } : null);
+
+        final Dialog dialog = builder.create();
+        if (!dismissOnConfirm) {
+            dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+                @Override
+                public void onShow(DialogInterface dialogInterface) {
+                    Button button = ((AlertDialog) dialog).getButton(AlertDialog.BUTTON_POSITIVE);
+                    button.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            if (confirmAction != null)
+                                confirmAction.onConfirmCheckBoxDialog(checkBox.isChecked());
                         }
                     });
                 }

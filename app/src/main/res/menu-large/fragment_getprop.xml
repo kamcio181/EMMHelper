@@ -8,12 +8,12 @@
         app:showAsAction="collapseActionView|ifRoom"
         app:actionViewClass="android.support.v7.widget.SearchView" />
     <item
-        android:id="@+id/action_export_to_txt"
+        android:id="@+id/action_export_to_csv"
         android:orderInCategory="100"
-        android:title="@string/export_to_txt"
+        android:title="@string/export_to_csv"
         app:showAsAction="ifRoom" />
     <item
-        android:id="@+id/action_share"
+        android:id="@+id/action_share_list"
         android:orderInCategory="200"
         android:title="@string/share_properties"
         app:showAsAction="ifRoom" />
